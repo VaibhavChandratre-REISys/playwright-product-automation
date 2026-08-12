@@ -1,0 +1,14 @@
+node_modules/
+dist/
+certs/
+reports/
+reports/html/
+reports/*/diagnostics/
+#.env
+#.env.*
+#!.env.example
+
+# Dry-run & temp output files
+dry-run-*.txt
+run-output*.txt
+temp_output.txt

@@ -1,0 +1,30 @@
+{
+    "cucumberautocomplete.steps": [
+        "src/framework/step-definitions/**/*.ts",
+        "src/framework/hooks/**/*.ts",
+        "src/framework/world/**/*.ts"
+    ],
+
+    "cucumberautocomplete.syncfeatures": "src/**/features/**/*.feature",
+
+    "cucumberautocomplete.strictGherkinCompletion": true,
+
+    "cucumberautocomplete.pages": {
+        "src/framework/step-definitions/**/*.ts": ".ts"
+    },
+
+    "cucumberautocomplete.smartSnippets": true,
+
+    "cucumberautocomplete.formatConfOverride": {
+        "And": 4,
+        "But": "feature"
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true
+    },
+    "compilets.autoStart": true
+}

@@ -1,0 +1,17 @@
+{
+  "files.associations": {
+    "*.feature": "feature"
+  },
+
+  "cucumberautocomplete.steps": [
+    "src/framework/step-definitions/*.ts"
+  ],
+
+  "cucumberautocomplete.syncfeatures": "src/**/*.feature",
+
+  "cucumberautocomplete.strictGherkinCompletion": false,
+
+  "cucumberautocomplete.smartSnippets": true,
+
+  "cucumberautocomplete.onTypeFormat": true
+}

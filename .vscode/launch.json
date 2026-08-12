@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Cucumber @65077",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/node_modules/@cucumber/cucumber/bin/cucumber-js",
+      "args": [
+        "--profile",
+        "product",
+        "--tags",
+        "@65077"
+      ],
+      "env": {
+        "PROJECT": "product",
+        "ENV": "merge-grantor"
+      },
+      "runtimeArgs": [
+        "--loader",
+        "ts-node/esm"
+      ],
+      "console": "integratedTerminal",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ]
+}

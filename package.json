@@ -1,0 +1,35 @@
+{
+  "name": "govgrants-playwright-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GovGrants Product — Playwright + Cucumber.js automation suite",
+  "scripts": {
+    "test": "cucumber-js",
+    "test:tag": "cucumber-js --tags \"${TAGS}\"",
+    "test:smoke": "cucumber-js --tags \"@smoke\"",
+    "lint": "tsc --noEmit",
+    "report": "node scripts/generate-report.js",
+    "posttest": "node scripts/generate-report.js",
+    "test:report": "cucumber-js && node scripts/generate-report.js",
+    "preflight": "ts-node src/framework/auth/preflight.ts"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.44.0",
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.5",
+    "jsonwebtoken": "^9.0.3",
+    "pdf-parse": "^2.4.5",
+    "playwright": "^1.44.0",
+    "xlsx": "^0.18.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^10.8.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.14.2",
+    "multiple-cucumber-html-reporter": "^3.7.0",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.23.11",
+    "typescript": "^5.4.5"
+  }
+}
