@@ -18,23 +18,24 @@ export class ApprovalPage extends BasePage {
   /** Click toast action if displayed (mirrors Selenium: ifToastActionIsDisplayed) */
   async clickToastActionIfPresent() {
     try {
-      // Use single specific locator matching Selenium
-      const toastAction = this.page.locator(`//button[@aria-label='View approval request details']`).nth(0);
+      // Exact locator from Selenium
+      const toastAction = this.page.locator(`//button[@aria-label='View approval request details']`).first();
       
-      // Check if toast is present
-      const isPresent = await toastAction.isVisible({ timeout: 5000 }).catch(() => false);
-      if (!isPresent) {
-        logger.info(`  Toast action button not found - approval decision may already be visible`);
-        return;
-      }
+      logger.info(`Checking for toast action button...`);
+      // Wait for element to be clickable (matching Selenium: ElementToBeClickable)
+      await this.waitHelper.waitUntilClickable(toastAction, 10000);
       
-      // Wait until element is clickable and click
-      await this.waitHelper.waitUntilClickable(toastAction, 3000);
+      logger.info(`Toast action button found and clickable - clicking to reveal approval decision`);
       await toastAction.click();
-      logger.info(`  Toast action clicked - waiting for approval decision to load`);
+      logger.info(`Toast action clicked successfully`);
+      
+      // Use Salesforce smart waits to ensure approval decision loads
+      await this.waitHelper.waitForSpinnerDisappear();
+      await this.sfWait.waitForPageReady();
+      logger.info(`Page ready after toast click - approval decision should now be visible`);
     } catch (e) {
-      // Toast action not present - ok
-      logger.debug(`  Toast action not present: ${e}`);
+      // Toast action not present or not clickable - this is OK (matching Selenium's catch TimeoutException)
+      logger.info(`Toast action not found or not clickable - approval decision may already be visible`);
     }
   }
 

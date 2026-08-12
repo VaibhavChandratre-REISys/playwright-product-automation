@@ -529,6 +529,12 @@ export class PageDetailsPage extends BasePage {
     logger.info(`Enter values from Excel: "${fileName}" / "${sheetName}" (modal=${isModal})`);
     const { readExcelFile } = require('../utils/excel-reader');
     const data = readExcelFile(fileName, sheetName);
+    
+    // If entering values in modal, wait for modal to be ready
+    if (isModal) {
+      await this.sfWait.waitForModalReady();
+    }
+    
     let currentSubTab = '';
     for (const row of data) {
       const subTab = row[0];
@@ -603,9 +609,14 @@ export class PageDetailsPage extends BasePage {
       "input:not([type='hidden']), textarea, select, button[aria-haspopup='listbox'], " +
       "div[class*='text-area'], .ql-editor, ul li[class*='listbox__item'], lightning-combobox";
 
-    // Wait for at least one wrapper element to be attached
+    // Wait for at least one wrapper element to be attached and stable
     const firstMatch = this.page.locator(locator).first();
     await this.waitHelper.waitUntilAttached(firstMatch, timeout);
+    
+    // Ensure the wrapper is stable (not detaching) by waiting for it to be visible
+    await firstMatch.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {
+      logger.debug(`  [WRAPPER] Element attached but not visible, continuing anyway`);
+    });
 
     // Retry loop — c-fieldlwc may be attached but internal inputs are lazy-rendered
     const maxRetries = 5;
@@ -616,7 +627,15 @@ export class PageDetailsPage extends BasePage {
       if (count <= 1) {
         const wrapper = allMatches.first();
         const hasEditable = await wrapper.locator(editableSelector).count().catch(() => 0);
-        if (hasEditable > 0 || retry === maxRetries - 1) {
+        if (hasEditable > 0) {
+          // Ensure the input field is clickable (matching Selenium ElementToBeClickable)
+          const inputField = wrapper.locator(editableSelector).first();
+          await this.waitHelper.waitUntilClickable(inputField, 3000).catch(() => {
+            logger.debug(`  [WRAPPER] Input field not clickable yet, but proceeding`);
+          });
+          return wrapper;
+        }
+        if (retry === maxRetries - 1) {
           return wrapper;
         }
         logger.info(`  [WRAPPER] Single match has no editable elements yet, waiting... (retry ${retry + 1}/${maxRetries})`);
@@ -632,6 +651,11 @@ export class PageDetailsPage extends BasePage {
         const hasEditable = await candidate.locator(editableSelector).count().catch(() => 0);
         if (hasEditable > 0) {
           logger.info(`  [WRAPPER] Using match ${i} (has editable elements)`);
+          // Ensure the input field is clickable
+          const inputField = candidate.locator(editableSelector).first();
+          await this.waitHelper.waitUntilClickable(inputField, 3000).catch(() => {
+            logger.debug(`  [WRAPPER] Input field not clickable yet, but proceeding`);
+          });
           return candidate;
         }
       }

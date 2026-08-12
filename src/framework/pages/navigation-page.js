@@ -150,8 +150,21 @@ export class NavigationPage extends BasePage {
     const resolved = this.resolve(subTabName);
     logger.info(`Sub-tab: "${resolved}"`);
     
+    // Wait for any modal to close first
+    const modalContainer = this.page.locator('//div[contains(@class,\'modal__container\')]');
+    const modalVisible = await modalContainer.isVisible().catch(() => false);
+    if (modalVisible) {
+      logger.info('[SF-Modal] Waiting for modal to close before navigating to sub-tab...');
+      await modalContainer.waitFor({ state: 'hidden', timeout: 15000 }).catch(() => {
+        logger.warn('[SF-Modal] Modal did not close within timeout');
+      });
+    }
+    
     // Wait for spinner to disappear before interacting with tabs
     await this.waitHelper.waitForSpinnerDisappear();
+    
+    // Wait for page to be fully loaded
+    await this.sfWait.waitForPageReady();
     
     // Use simpler XPath matching Selenium implementation
     const desiredTab = this.page.locator(

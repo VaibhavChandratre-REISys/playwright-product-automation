@@ -53,20 +53,17 @@ When(
   async function (this: CustomWorld, approvalType: string) {
     const approval = new ApprovalPage(this.page, this.savedValues);
     
-    // Wait for page to stabilize after clicking Start icon
+    // Wait for page to stabilize after clicking View/Start icon (matching Selenium flow)
     await this.waitHelper.waitForSpinnerDisappear();
     
-    // Log current URL for debugging
-    const currentUrl = this.page.url();
-    logger.info(`Current URL after Start icon click: ${currentUrl}`);
-    
-    // Check and click toast action if displayed (mirrors Selenium: ifToastActionIsDisplayed)
+    // IMPORTANT: Check and click toast action FIRST before checking for approval decision
+    // The toast button reveals the approval decision component (matching Selenium: ifToastActionIsDisplayed)
     await approval.clickToastActionIfPresent();
     
     // Wait for approval decision component to be visible with retries
     logger.info('Waiting for approval decision component to be visible...');
-    // Wait for approval component with Playwright's built-in retry
-    const isVisible = await approval.waitForApprovalVisible(15000);
+    const isVisible = await approval.waitForApprovalVisible(20000);
+    
     // Log page content for debugging
     const hasApprovalComponent = await this.page.locator('//c-approval-decision').count();
     logger.info(`Approval component count: ${hasApprovalComponent}`);
