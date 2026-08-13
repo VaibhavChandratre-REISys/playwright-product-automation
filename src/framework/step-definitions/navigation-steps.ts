@@ -10,6 +10,7 @@ import { QuickSearchPage } from '../pages/quick-search-page';
 import { LoginPage } from '../pages/login-page';
 import { logger } from '../utils/logger';
 import { getProject } from '../utils/get-project';
+import { SalesforceWaitHelper } from '../utils/salesforce-wait-helper';
 
 // ── Main tab ──────────────────────────────────────────────────────────────────
 
@@ -857,16 +858,17 @@ When(
       `//select//option[text()='${fileType}']`
     ).first();
     
-    // Wait for element to be present (mirrors Java: ElementToBePresent)
-    await classificationSelect.waitFor({ state: 'attached', timeout: 10000 });
-    // Wait for option to be clickable (mirrors Java: ElementToBeClickable)
+    // Wait for element to be visible and enabled
+    await this.waitHelper.waitUntilVisible(classificationSelect, 10000);
     await options.waitFor({ state: 'attached', timeout: 10000 });
-    // Select by value (mirrors Java: selectByValue)
+    // Select by value
     await classificationSelect.selectOption({ value: fileType });
     logger.info(`  Classification set to "${fileType}"`);
     
-    // Wait 15 seconds after dropdown selection (mirrors Java: makeThreadSleep(15000))
-    await this.page.waitForTimeout(15000);
+    // Wait for Salesforce to process dropdown change (replaces 15s static wait)
+    const sfWait = new SalesforceWaitHelper(this.page);
+    await sfWait.waitForSalesforceAPI();
+    await sfWait.waitForAuraReady();
 
     // 3. Set file input (mirrors Java: textInput().in(filePath, defaultFilePath + newFileName))
     const fileInput = this.page.locator(
@@ -892,15 +894,14 @@ When(
     logger.info(`  File set: ${finalFilePath}`);
 
     // 4. Click Upload button with JavaScript (mirrors Java: click().withJavaScript(By.xpath("//button[text()='Upload']")))
-    await this.page.waitForTimeout(2000);
     const uploadBtn = this.page.locator(`//button[text()='Upload' or normalize-space(text())='Upload']`).first();
+    await this.waitHelper.waitUntilClickable(uploadBtn, 10000);
     await this.clickHelper.clickWithJavaScript(uploadBtn);
     logger.info(`  Clicked Upload button with JavaScript`);
 
-
-    // 5. Wait 5 seconds after upload (mirrors Java: makeThreadSleep(5000))
-    await this.page.waitForTimeout(5000);
-    await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+    // 5. Wait for upload to complete (replaces 5s static wait)
+    await sfWait.waitForSalesforceAPI();
+    await sfWait.waitForPageReady();
   }
 );
 
