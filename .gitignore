@@ -8,6 +8,10 @@ reports/*/diagnostics/
 #.env.*
 #!.env.example
 
+# Compiled JavaScript files (TypeScript outputs to dist/)
+src/**/*.js
+src/**/*.js.map
+
 # Dry-run & temp output files
 dry-run-*.txt
 run-output*.txt
