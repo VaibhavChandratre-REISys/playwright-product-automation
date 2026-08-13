@@ -155,21 +155,22 @@ export class SalesforceWaitHelper {
     const startTime = Date.now();
     
     // Wait for modal container to exist
-    const modalContainer = this.page.locator('//div[contains(@class,\'modal__container\')]');
+    const modalContainer = this.page.locator('//div[contains(@class,\'modal__container\')]').last();
     await modalContainer.waitFor({ state: 'visible', timeout });
     
-    // Wait for modal animation to complete (CSS transition)
-    await this.page.waitForFunction(
-      () => {
-        const modal = document.querySelector('.modal__container');
-        if (!modal) return false;
-        
-        // Check if CSS transition is complete
-        const style = window.getComputedStyle(modal);
-        return parseFloat(style.opacity) === 1;
-      },
-      { timeout: 5000 }
-    ).catch(() => {});
+    // Wait for modal animation (opacity) to settle. Evaluate directly on the resolved
+    // element handle (instead of a fresh document.querySelector inside waitForFunction)
+    // so it always targets the modal instance we just found visible — a global
+    // querySelector can otherwise match a stale/duplicate ".modal__container" left in the
+    // DOM whose opacity never reaches 1, forcing this check to burn its full timeout.
+    const animationDeadline = Date.now() + 2000;
+    while (Date.now() < animationDeadline) {
+      const opacity = await modalContainer
+        .evaluate((el) => parseFloat(window.getComputedStyle(el).opacity))
+        .catch(() => 1);
+      if (opacity >= 0.99) break;
+      await this.page.waitForTimeout(100);
+    }
     
     // Wait for any spinners inside modal
     await this.waitForSpinnerDisappear();
@@ -256,34 +257,35 @@ export class SalesforceWaitHelper {
     logger.info('[SF-Modal] Waiting for modal to be fully loaded...');
     
     try {
-      // Wait for modal container
+      // Wait for modal container. Use .last() (not .first()) since Salesforce can leave
+      // stale/closed modal containers behind in the DOM — .first() would keep matching
+      // one of those instead of the currently-open modal.
       const modalContainer = this.page.locator(
-        `//div[contains(@class,'modal__container')], ` +
-        `//div[contains(@class,'slds-modal')], ` +
+        `//div[contains(@class,'modal__container')] | ` +
+        `//div[contains(@class,'slds-modal')] | ` +
         `//div[@role='dialog']`
-      ).first();
+      ).last();
       
       await modalContainer.waitFor({ state: 'visible', timeout: 5000 });
       
-      // Wait for modal animation to complete (CSS transitions)
-      await this.page.waitForFunction(
-        () => {
-          const modal = document.querySelector('.modal__container, .slds-modal, [role="dialog"]');
-          if (!modal) return false;
-          
-          const styles = window.getComputedStyle(modal);
+      // Wait for modal animation to complete (CSS transitions). Evaluate directly on the
+      // resolved element handle instead of a fresh document.querySelector so it always
+      // targets the modal instance found above, not a stale duplicate elsewhere in the DOM.
+      const animationDeadline = Date.now() + 3000;
+      while (Date.now() < animationDeadline) {
+        const isReady = await modalContainer.evaluate((el) => {
+          const styles = window.getComputedStyle(el);
           const opacity = parseFloat(styles.opacity);
           const transform = styles.transform;
-          
-          // Modal is ready when opacity is 1 and no transform animation
-          return opacity === 1 && (transform === 'none' || !transform.includes('matrix'));
-        },
-        { timeout: 3000 }
-      ).catch(() => {});
+          return opacity >= 0.99 && (transform === 'none' || !transform.includes('matrix'));
+        }).catch(() => true);
+        if (isReady) break;
+        await this.page.waitForTimeout(100);
+      }
       
       // Wait for any spinners in modal to disappear
       const modalSpinner = this.page.locator(
-        `//div[contains(@class,'modal__container')]//div[contains(@class,'slds-spinner')], ` +
+        `//div[contains(@class,'modal__container')]//div[contains(@class,'slds-spinner')] | ` +
         `//div[contains(@class,'slds-modal')]//div[contains(@class,'slds-spinner')]`
       ).first();
       
