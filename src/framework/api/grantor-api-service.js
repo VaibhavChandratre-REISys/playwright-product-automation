@@ -1204,14 +1204,13 @@ export class GrantorApiService {
       await this.authenticate();
     }
 
-    logger.info(`[API] Deleting record "${recordName}" from object "${objectType}"`);
     const url = `${this.instanceUrl}/services/apexrest/productAutomationDeletionApi?objectType=${encodeURIComponent(objectType)}&recordName=${encodeURIComponent(recordName)}`;
     try {
       const response = await this.client.delete(url, { headers: this.authHeaders() });
-      logger.info(`[API] Deletion response: ${response.status}`);
+      logger.info(`[API] Deleted ${objectType}: ${recordName}`);
     } catch (error) {
       if (error.response) {
-        logger.error(`Deletion error: ${error.response.status} — ${JSON.stringify(error.response.data)}`);
+        logger.error(`[API] Deletion failed for ${objectType} "${recordName}": ${error.response.status} — ${JSON.stringify(error.response.data)}`);
       }
       throw error;
     }
@@ -1225,13 +1224,21 @@ export class GrantorApiService {
    */
   async cleanupTestData() {
     if (!this.accessToken) {
-      try { await this.authenticate(); } catch (e2) { return; }
+      try { 
+        await this.authenticate(); 
+      } catch (e) { 
+        logger.warn(`[CLEANUP] Authentication failed: ${e.message}`);
+        return; 
+      }
     }
 
     const runtimeKeys = this.savedValues.getAllKeysStartingWith('AUTOMATION RUNTIME');
-    if (runtimeKeys.length === 0) return;
-
-    logger.info(`[CLEANUP] Found ${runtimeKeys.length} runtime records to clean up`);
+    
+    if (runtimeKeys.length === 0) {
+      return;
+    }
+    
+    logger.info(`[CLEANUP] Cleaning up ${runtimeKeys.length} runtime record(s)`);
 
     const safeDelete = async (recordName, objectType) => {
       try {
@@ -1242,7 +1249,15 @@ export class GrantorApiService {
     };
 
     const keyLower = (k) => k.toLowerCase();
-    const valueOf = (k) => this.savedValues.resolve(`{${k}}`);
+    // Get the actual saved value, not resolve it as a token
+    const valueOf = (k) => {
+      try {
+        return this.savedValues.get(k);
+      } catch (e2) {
+        // If key not found, try resolving as token (fallback for old behavior)
+        return this.savedValues.resolve(`{${k}}`);
+      }
+    };
 
     // Phase 1: Simple record types
     for (const key of runtimeKeys) {

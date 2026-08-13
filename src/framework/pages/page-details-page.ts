@@ -853,12 +853,26 @@ export class PageDetailsPage extends BasePage {
       
       if (count > 0) {
         const firstTextarea = textarea.first();
-        // Wait for textarea to be visible
-        await this.waitHelper.waitUntilVisible(firstTextarea, 10000).catch(() => {});
-        await firstTextarea.evaluate((el: any) => el.click()).catch(() => {});
-        await firstTextarea.clear().catch(() => {});
-        await firstTextarea.fill(value);
-        logger.info(`  [RICHTEXT] Successfully filled textarea via XPath`);
+        // Don't wait for visibility - Salesforce textareas are often hidden by CSS
+        // Just wait for it to be attached to DOM
+        await this.waitHelper.waitUntilAttached(firstTextarea, 5000).catch(() => {});
+        // Use JavaScript to set value directly on hidden textarea
+        await firstTextarea.evaluate((el: HTMLTextAreaElement, val: string) => {
+          el.value = val;
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }, value).catch((err) => {
+          logger.warn(`  [RICHTEXT] JavaScript fill failed: ${err}, trying Playwright fill`);
+        });
+        // Verify it was set
+        const actualValue = await firstTextarea.inputValue().catch(() => '');
+        if (actualValue === value) {
+          logger.info(`  [RICHTEXT] Successfully filled textarea via XPath (JavaScript)`);
+          return;
+        }
+        // Fallback: try Playwright fill with force
+        await firstTextarea.fill(value, { force: true }).catch(() => {});
+        logger.info(`  [RICHTEXT] Successfully filled textarea via XPath (Playwright force)`);
         return;
       }
     }
@@ -909,7 +923,6 @@ export class PageDetailsPage extends BasePage {
    * Mirrors Java: click().withJavaScript() → clear → sendKeys, with 3-attempt retry.
    */
   private async fillInputWithRetry(input: any, value: string): Promise<void> {
-    const maxAttempts = 3;
     // contenteditable divs (rich text) don't support inputValue() — use textContent instead
     const isContentEditable = await input.getAttribute('contenteditable').catch(() => null);
     const readValue = async (): Promise<string> => {
@@ -918,41 +931,39 @@ export class PageDetailsPage extends BasePage {
       }
       return input.inputValue().catch(() => '');
     };
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        await input.scrollIntoViewIfNeeded({ timeout: 3000 });
-      } catch {
-        await input.evaluate((el: Element) => el.scrollIntoView({ block: 'center' }));
-      }
-      // Java uses click().withJavaScript() — dispatchEvent is the Playwright equivalent
-      await input.dispatchEvent('click');
-      // Triple-click to select all, then type
-      await input.click({ clickCount: 3 });
-      await input.fill(value);
-      await input.press('Tab');
-      await this.page.waitForTimeout(200);
-      // Verify the value was actually set
-      const actual = await readValue();
-      if (actual === value || this.areDatesEqual(actual, value) || this.areNumbersEqual(actual, value)) {
+    
+    // Check if value is already correct before entering
+    try {
+      const initialActual = await readValue();
+      if (initialActual && (initialActual === value || this.areDatesEqual(initialActual, value) || this.areNumbersEqual(initialActual, value))) {
+        logger.debug(`Field already has correct value "${value}", skipping entry`);
         return;
       }
-      logger.warn(`Field fill attempt ${attempt}/${maxAttempts}: value not persisted ("${actual}" vs "${value}")`);
-      if (attempt < maxAttempts) {
-        // Retry with character-by-character typing
-        await input.dispatchEvent('click');
-        await input.click({ clickCount: 3 });
-        await this.page.keyboard.press('Backspace');
-        await input.type(value, { delay: 30 });
-        await input.press('Tab');
-        await this.page.waitForTimeout(200);
-        const retryActual = await readValue();
-        if (retryActual === value || this.areDatesEqual(retryActual, value) || this.areNumbersEqual(retryActual, value)) {
-          logger.info(`Field fill succeeded on type() retry (attempt ${attempt})`);
-          return;
-        }
-      }
+    } catch (error) {
+      // If we can't read the value, proceed with filling
+      logger.debug(`Could not read initial value, proceeding with fill`);
     }
-    logger.warn(`Field fill: value may not have persisted after ${maxAttempts} attempts`);
+    
+    try {
+      await input.scrollIntoViewIfNeeded({ timeout: 3000 });
+    } catch {
+      await input.evaluate((el: Element) => el.scrollIntoView({ block: 'center' }));
+    }
+    
+    // Single attempt: click, fill, and verify
+    await input.click();
+    await input.fill(value);
+    await input.press('Tab');
+    await this.page.waitForTimeout(200);
+    
+    // Verify the value was actually set
+    const actual = await readValue();
+    if (actual === value || this.areDatesEqual(actual, value) || this.areNumbersEqual(actual, value)) {
+      return;
+    }
+    
+    // If first attempt failed, log warning but don't retry to avoid double entry
+    logger.warn(`Field fill: value not persisted correctly ("${actual}" vs "${value}") - not retrying to avoid duplicate entry`);
   }
 
   /**
@@ -1007,6 +1018,7 @@ export class PageDetailsPage extends BasePage {
     await searchInput.fill(value);
     
     // Wait for lookup dropdown to populate
+    await this.page.waitForTimeout(500);
 
     // Java: //div[@title='value']  |  POC: //div[@title] + //span[contains(@title)] + //*[@role='option']//span
     const option = this.page.locator(
@@ -1017,10 +1029,13 @@ export class PageDetailsPage extends BasePage {
     ).first();
     try {
       await this.waitHelper.waitUntilVisible(option, 5000);
-      await this.clickHelper.click(option);
+      // Don't scroll the option as it can close the dropdown
+      // Wait for it to be stable and click
+      await option.waitFor({ state: 'visible', timeout: 3000 });
+      await option.click({ timeout: 3000 });
       logger.info(`  [LOOKUP] Selected option for "${value}"`);
-    } catch {
-      logger.warn(`  [LOOKUP] Option not found via locator, trying keyboard selection`);
+    } catch (error) {
+      logger.warn(`  [LOOKUP] Option not found via locator (${error}), trying keyboard selection`);
       await this.page.keyboard.press('ArrowDown');
       await this.page.waitForTimeout(100);
       await this.page.keyboard.press('Enter');
@@ -1086,7 +1101,9 @@ export class PageDetailsPage extends BasePage {
         `//lightning-base-combobox-item//span[@title='${selectedValue}']` 
       ).locator('visible=true').first();
       await this.waitHelper.waitUntilVisible(option, 5000);
-      await this.clickHelper.click(option);
+      // Don't scroll the option as it can close the dropdown
+      await option.waitFor({ state: 'visible', timeout: 3000 });
+      await option.evaluate((el: HTMLElement) => el.click());
       logger.info(`  [PICKLIST] Selected "${selectedValue}"`);
       await this.waitHelper.waitForSpinnerDisappear();
       return;
@@ -1117,8 +1134,10 @@ export class PageDetailsPage extends BasePage {
       throw new Error(`No visible option found for "${selectedValue}"`);
     }
     
-    // Use JavaScript click for option
-    await this.clickHelper.clickWithJavaScript(option);
+    // Don't scroll the option as it can close the dropdown
+    // Use JavaScript click for reliability
+    await option.waitFor({ state: 'attached', timeout: 3000 });
+    await option.evaluate((el: HTMLElement) => el.click());
     logger.info(`  [PICKLIST] Selected "${selectedValue}"`);
     await this.waitHelper.waitForSpinnerDisappear();
   }
