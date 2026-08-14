@@ -75,6 +75,12 @@ export class NavigationPage extends BasePage {
       await this.page.goto(fullUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
       await this.waitForSpinner();
     }
+
+    // The tab click itself registers immediately, but the new tab's own page/sidebar
+    // content (e.g. its "My Tasks" accordion) can take a bit longer to actually swap in.
+    // Without this, a follow-up sidebar click can still land on the previous tab's
+    // "Pending Tasks" link before this tab's content has replaced it.
+    await this.page.waitForTimeout(4000);
   }
 
   /**

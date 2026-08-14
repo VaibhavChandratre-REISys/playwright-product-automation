@@ -136,6 +136,27 @@ export class GrantorApiService {
   }
 
   /**
+   * Poll getIdOf() until the record is queryable (id found) or maxWaitMs elapses.
+   * Used in place of blind fixed sleeps after fire-and-forget batch/creation APIs
+   * that need a moment for Salesforce to process before the record can be queried.
+   */
+  async pollForId(objectName: string, recordName: string, maxWaitMs: number, intervalMs: number): Promise<string> {
+    const startTime = Date.now();
+    let id: string | undefined;
+    while ((Date.now() - startTime) < maxWaitMs) {
+      id = await this.getIdOf(objectName, recordName).catch(() => undefined);
+      if (id) return id;
+      await this.sleep(intervalMs);
+    }
+    // Final attempt after the loop in case the last sleep window was skipped
+    id = await this.getIdOf(objectName, recordName).catch(() => undefined);
+    if (!id) {
+      throw new Error(`pollForId: "${recordName}" (${objectName}) not found after waiting ${maxWaitMs}ms`);
+    }
+    return id;
+  }
+
+  /**
    * Get record type ID.
    * POST /services/apexrest/getRecordTypeIds/v1
    */
@@ -1147,7 +1168,10 @@ export class GrantorApiService {
     const jobId = String(runResponse.data).replace(/"/g, '');
     logger.info(`[API] Batch job started: ${jobId}`);
 
-    await this.sleep(20000);
+    // Give the job a brief moment to register before the first status check (polling
+    // too early can 404/throw before the batch job record exists), then poll frequently
+    // so we exit as soon as it completes instead of always burning a fixed 20s upfront.
+    await this.sleep(5000);
 
     const statusUrl = `${this.instanceUrl}/services/apexrest/productAutomationGetBatchJobStatus?batchId=${jobId}`;
     const maxWait = 120;
@@ -1162,7 +1186,7 @@ export class GrantorApiService {
       if (status.toLowerCase() === 'completed' || status.toLowerCase() === 'aborted') {
         break;
       }
-      await this.sleep(7000);
+      await this.sleep(3000);
     }
 
     if (status.toLowerCase() === 'completed' && objectApiName.toLowerCase() !== 'closeout') {
@@ -1533,11 +1557,20 @@ export class GrantorApiService {
         if (payload.Grant?.[0]) payload.Grant[0].IsGoalsRequired = 'No';
         break;
       case 'ADVANCE_PERMISSIBLE_YES_FOCUS_AREA_NO':
-        if (payload.Grant?.[0]) payload.Grant[0].IsAdvancePermitted = 'Yes';
+        if (payload.Grant?.[0]) {
+          payload.Grant[0].FocusAreaRequired = 'No';
+          payload.Grant[0].IsAdvancePermitted = 'Yes';
+        }
+        payload.BuildUpItems = [{
+          BudgetCategory: 'Construction', Title: 'Construction', Narrative: 'Test Build-up',
+          AwardedBudget: 1000, CashMatch: 100, NonCashMatch: 100, OtherLeverageOptional: null,
+          ServiceAreaName: 'Standard Focus Area',
+        }];
         break;
       case 'ADVANCE_PERMISSIBLE_YES_FOCUS_AREA_NO_BUILDUP_YES_PROJECT_END_DATE':
         if (payload.Grant?.[0]) {
           payload.Grant[0].IsAdvancePermitted = 'Yes';
+          payload.Grant[0].FocusAreaRequired = 'No';
           payload.Grant[0].IsBuildUpFunctionality = 'Yes';
           payload.Grant[0].ProjectPeriodEndDate = this.dateWithOffset(365);
         }
@@ -1545,12 +1578,14 @@ export class GrantorApiService {
       case 'ADVANCE_YES_FOCUS_NO_PROGRAM_ANTICIPATED_NO':
         if (payload.Grant?.[0]) {
           payload.Grant[0].IsAdvancePermitted = 'Yes';
+          payload.Grant[0].FocusAreaRequired = 'No';
           payload.Grant[0].IsProgramIncomeAnticipated = 'No';
         }
         break;
       case 'ADVANCE_PERMIS_YES_FOCUS_AREA_NO_BUILDUP_YES':
         if (payload.Grant?.[0]) {
           payload.Grant[0].IsAdvancePermitted = 'Yes';
+          payload.Grant[0].FocusAreaRequired = 'No';
           payload.Grant[0].IsBuildUpFunctionality = 'Yes';
         }
         payload.BuildUpItems = [{
@@ -1564,6 +1599,7 @@ export class GrantorApiService {
           payload.Grant[0].InternalOrganization = await this.getIdOf('Account', 'Automation IND');
           if (normalizedFilter.includes('ADVANCE')) {
             payload.Grant[0].IsAdvancePermitted = 'Yes';
+            payload.Grant[0].FocusAreaRequired = 'No';
           }
         }
         break;
@@ -1645,12 +1681,10 @@ export class GrantorApiService {
         throw new Error(`Award creation failed with status ${createResponse.status}`);
       }
 
-      // Wait 60 seconds for Salesforce to process
-      logger.info(`[API] Waiting 60 seconds for Salesforce to process award creation...`);
-      await this.sleep(60000);
-
-      // Step 2: Activate the award
-      const awardId = await this.getIdOf('Award__c', grantName);
+      // Poll for the newly-created award to become queryable instead of blindly
+      // sleeping 60s. Exits as soon as the ID is found, falling back to the same
+      // 60s ceiling as a safety net if Salesforce is genuinely slow to process it.
+      const awardId = await this.pollForId('Award__c', grantName, 60000, 3000);
       logger.info(`[API] Retrieved Award ID: ${awardId}`);
 
       const activateUrl = `${this.instanceUrl}/services/apexrest/activateAwardFromGrant/v2?AwardId=${awardId}`;

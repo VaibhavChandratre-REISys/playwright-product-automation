@@ -191,7 +191,22 @@ export class PageDetailsPage extends BasePage {
     const resolved = this.resolve(fieldLabel);
     const resolvedVal = this.resolve(expectedValue);
     logger.info(`Assert field "${resolved}" = "${resolvedVal}"`);
-    const actual = await this.getFieldValue(resolved);
+
+    // Smart wait: resolves almost immediately if the page is already stable (spinners
+    // gone, no pending Aura/API calls), but properly waits out any in-flight reload
+    // (e.g. after a status-changing action like "Submit to Grantor") without a fixed sleep.
+    await this.sfWait.waitForPageReady().catch(() => {});
+
+    // Some status-changing actions update the field slightly after spinners/tracked API
+    // calls settle (e.g. a Flow/trigger-driven update). Poll briefly instead of a single
+    // point-in-time read — exits the moment it matches, so it doesn't slow the common
+    // case where the value is already correct.
+    let actual = await this.getFieldValue(resolved);
+    const deadline = Date.now() + 12000;
+    while (!actual.includes(resolvedVal) && Date.now() < deadline) {
+      await this.page.waitForTimeout(1500);
+      actual = await this.getFieldValue(resolved);
+    }
     expect(actual).toContain(resolvedVal);
   }
 

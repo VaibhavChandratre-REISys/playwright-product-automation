@@ -1597,7 +1597,6 @@ Feature: Validate sanity testing of Complete Business Flow
     Given I activated standalone subaward "Automation Runtime award" with properties "ADVANCE_PERMISSIBLE_YES_FOCUS_AREA_NO" of type "Competitive"
     And I am on "SUBPORTAL" portal
     When I login to "Grants Portal" app as "SPI3" user
-    And I wait for "2" seconds
     And I navigate to "Grants" tab
     When I navigate to "Grants" content inside "Grants, Subawards & Amendments" subheader on left panel
     And I click toggle button to select "Grants - Active"
@@ -1621,9 +1620,7 @@ Feature: Validate sanity testing of Complete Business Flow
     When I navigate to "Forms and Files" sub tab
     When I click on "Attach" icon for "Mandatory" inside flex table with id "---paymentRequest:-:recipientAdvanceSupportiveDocumentChecklistTableId---" without waiting for record
     And I upload attachment without random number "Attachment.pdf" of type "Others" from computer
-    And I wait for "2" seconds
     When I click modal button "Close"
-    And I wait for "2" seconds
     When I click on "Submit to Grantor" in the page details
     And I wait for "2" seconds
     Then I see status in Progress-bar is "Submitted to Grantor" and is "dark blue"
@@ -1637,9 +1634,6 @@ Feature: Validate sanity testing of Complete Business Flow
       | Funding Account             | Advance Requested This Action |
       | {SavedValue:fundingAccount} | 10                            |
     When I navigate to "Responsibilities" sub tab
-    When I enter the following values into flex table with id "---paymentRequest:-:approversTableId---" by clicking "New" :
-      | Name                     | Advance |
-      | {SavedValue:PM Username} | NA      |
     When I enter the following values into flex table with id "---paymentRequest:-:approversTableId---" by clicking "New" :
       | Name                     | Advance |
       | {SavedValue:FO Username} | Step 1  |
@@ -1658,7 +1652,6 @@ Feature: Validate sanity testing of Complete Business Flow
     When I click on "Mark As Paid" in the page details
     And I enter in modal "Paid Details" values from "PaymentRequest_Field_Values.xlsx"
     When I click modal button "Save"
-    And I wait for "2" seconds
     When I click modal button "Close"
 #   To Do:- Remove the refresh step once bug resolve for refresh behavior
     And I refresh the page
@@ -1684,7 +1677,6 @@ Feature: Validate sanity testing of Complete Business Flow
       | Title        | Narrative     | Unit Price | Quantity | Measurement | Advance Applied |
       | Extra Salary | The narrative | 30         | 1        | Feet        | 10              |
     When I close "Payment Line Items" modal by clicking the top right x button
-    And I wait for "2" seconds
     And I click on "Submit to Grantor" in the page details
     And I wait for "2" seconds
     When I re-login to "Grantor" app as "PM" user on "INTERNAL" portal
@@ -1697,9 +1689,6 @@ Feature: Validate sanity testing of Complete Business Flow
       | Funding Account             | Net Spent This Action | Advance Applied This Action |
       | {SavedValue:fundingAccount} | 30                    | 10                          |
     When I navigate to "Responsibilities" sub tab
-    When I enter the following values into flex table with id "---paymentRequest:-:ReimbursmentApproverTableId---" by clicking "New" :
-      | Name                     | Reimbursement |
-      | {SavedValue:PM Username} | NA            |
     When I enter the following values into flex table with id "---paymentRequest:-:ReimbursmentApproverTableId---" by clicking "New" :
       | Name                      | Reimbursement |
       | {SavedValue:EXE Username} | Step 1        |
@@ -1720,7 +1709,6 @@ Feature: Validate sanity testing of Complete Business Flow
     When I click on "Mark As Paid" in the page details
     And I enter in modal "Paid Details" values from "PaymentRequest_Field_Values.xlsx"
     When I click modal button "Save"
-    And I pause execution for "2" seconds
     When I click modal button "Close"
 #   To Do:- Remove the refresh step once bug resolve for refresh behavior
     Then I softly see field "Status" as "Paid"
@@ -2698,10 +2686,9 @@ Feature: Validate sanity testing of Complete Business Flow
     And I save the field labeled "Grant ID" as "GrantEGMSID"
     Given I navigate to "Management" sub tab
     And I click on top right button "New" in flex table with id "---subAwardStandAlone:-:recipientAwardAmendmentRequestTableId---"
-    When I enter "Subrecipient_BRedirection" values from "AmendmentRequest_Field_Values.xlsx"
+    When I enter in modal "Subrecipient_BRedirection" values from "AmendmentRequest_Field_Values.xlsx"
     And I click modal button "Save and Continue"
     And I enter value "Automation Justification" into field "Justification__c"
-    And I wait for "3" seconds
     When I click on "Save" in the page details
     Then I softly see status in Progress-bar is "Created" and is "dark blue"
     And I save the field labeled "EGMS ID" as "BUDGETREDIRECTIONID"
@@ -2710,14 +2697,12 @@ Feature: Validate sanity testing of Complete Business Flow
       | Title        | Award Amount |
       | Construction | 900          |
     When I close "Amendment Line Items" modal by clicking the top right x button
-    And I wait for "2" seconds
     When I click on "Add Line Items" icon for "Indirect costs" inside flex table with id "---amendment:-:budgetChangeTableId---"
     And I enter the following values into flex table with id "---amendment:-:amendmentLineItemsTableId---" by clicking "New" :
       | Title        | Narrative     | Award Amount |
       | Construction | The Narrative | 100          |
     When I close "Amendment Line Items" modal by clicking the top right x button
     And I click on "Submit to Grantor" in the page details
-    And I wait for "2" seconds
     When I re-login to "Grantor" app as "PM" user on "INTERNAL" portal
     And I navigate to "Grants" tab
     And I navigate to "Pending Tasks" content inside "My Tasks" subheader on left panel
@@ -2726,12 +2711,8 @@ Feature: Validate sanity testing of Complete Business Flow
     When I navigate to "Responsibilities" sub tab
     When I enter the following values into flex table with id "---amendment:-:approversTableId---" by clicking "New" :
       | Name                     | Amendment Request |
-      | {SavedValue:PO Username} | NA                |
-    When I enter the following values into flex table with id "---amendment:-:approversTableId---" by clicking "New" :
-      | Name                     | Amendment Request |
       | {SavedValue:PO Username} | Step 1            |
     And I click on "Submit for Approval" in the page details
-    And I wait for "3" seconds
     Then I softly see field "Status" as "Submitted for Approval"
     When I re-login to "Grantor" app as "PO" user on "INTERNAL" portal
     And I navigate to "Grants" tab
@@ -2746,9 +2727,7 @@ Feature: Validate sanity testing of Complete Business Flow
     And I perform quick search for "{SavedValue:BUDGETREDIRECTIONID}" in "---amendment:-:grantorAmendmentRequestsTableId---" panel
     When I click on "View" icon for "{SavedValue:BUDGETREDIRECTIONID}" inside flex table with id "---amendment:-:grantorAmendmentRequestsTableId---" without waiting for record
     And I click on "Amend Subaward" in the page details
-    And I wait for "4" seconds
     When I click on "Activate" in the page details
-    And I wait for "3" seconds
     Then I softly see that "Subaward" is in "Activated" status
 
   @ValidatedDetailBudgetYesScenarioInAward @ProdSan2
@@ -4608,7 +4587,7 @@ Feature: Validate sanity testing of Complete Business Flow
       | Announcement Name                                               | Application Name                                                |
       | {SavedValue:Automation Runtime Announcement Application Review} | {SavedValue:Automation Runtime Announcement Application Review} |
 
-@204048 @ARGrantorSOWAddFile @ProdSan1
+@204048 @ARGrantorSOWAddFile
 Scenario: AR by Grantor_SOW_Add FILE - Verify Internal user can add file up to submit for approval status
   # Create and activate award using API (saves the generated name with random number)
   Given I activated standalone subaward "Automation Runtime Amendment Award" with properties "default" of type "Competitive"
@@ -4645,7 +4624,7 @@ Scenario: AR by Grantor_SOW_Add FILE - Verify Internal user can add file up to s
   Then I can see row level action button "Edit" against "Attachment.pdf" in flex table with id "---amendment:-:amendmentAddFilesTableId---"
   Then I can see row level action button "Delete" against "Attachment.pdf" in flex table with id "---amendment:-:amendmentAddFilesTableId---"
 
-@204051 @ARGrantorSOWEditDeleteButton @ProdSan1
+@204051 @ARGrantorSOWEditDeleteButton
 Scenario: AR by Grantor_SOW_Edit/Delete button - Verify Internal user can Delete file if owner, and External user can Delete file if owner
   # Create and activate award using API
   Given I activated standalone subaward "Automation Runtime Amendment Award" with properties "default" of type "Competitive"
