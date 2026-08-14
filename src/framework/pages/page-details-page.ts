@@ -191,6 +191,12 @@ export class PageDetailsPage extends BasePage {
     const resolved = this.resolve(fieldLabel);
     const resolvedVal = this.resolve(expectedValue);
     logger.info(`Assert field "${resolved}" = "${resolvedVal}"`);
+
+    // Smart wait: resolves almost immediately if the page is already stable (spinners
+    // gone, no pending Aura/API calls), but properly waits out any in-flight reload
+    // (e.g. after a status-changing action like "Submit to Grantor") without a fixed sleep.
+    await this.sfWait.waitForPageReady().catch(() => {});
+
     const actual = await this.getFieldValue(resolved);
     expect(actual).toContain(resolvedVal);
   }
