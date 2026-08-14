@@ -1597,7 +1597,6 @@ Feature: Validate sanity testing of Complete Business Flow
     Given I activated standalone subaward "Automation Runtime award" with properties "ADVANCE_PERMISSIBLE_YES_FOCUS_AREA_NO" of type "Competitive"
     And I am on "SUBPORTAL" portal
     When I login to "Grants Portal" app as "SPI3" user
-    And I wait for "2" seconds
     And I navigate to "Grants" tab
     When I navigate to "Grants" content inside "Grants, Subawards & Amendments" subheader on left panel
     And I click toggle button to select "Grants - Active"
@@ -1621,9 +1620,7 @@ Feature: Validate sanity testing of Complete Business Flow
     When I navigate to "Forms and Files" sub tab
     When I click on "Attach" icon for "Mandatory" inside flex table with id "---paymentRequest:-:recipientAdvanceSupportiveDocumentChecklistTableId---" without waiting for record
     And I upload attachment without random number "Attachment.pdf" of type "Others" from computer
-    And I wait for "2" seconds
     When I click modal button "Close"
-    And I wait for "2" seconds
     When I click on "Submit to Grantor" in the page details
     And I wait for "2" seconds
     Then I see status in Progress-bar is "Submitted to Grantor" and is "dark blue"
@@ -1637,9 +1634,6 @@ Feature: Validate sanity testing of Complete Business Flow
       | Funding Account             | Advance Requested This Action |
       | {SavedValue:fundingAccount} | 10                            |
     When I navigate to "Responsibilities" sub tab
-    When I enter the following values into flex table with id "---paymentRequest:-:approversTableId---" by clicking "New" :
-      | Name                     | Advance |
-      | {SavedValue:PM Username} | NA      |
     When I enter the following values into flex table with id "---paymentRequest:-:approversTableId---" by clicking "New" :
       | Name                     | Advance |
       | {SavedValue:FO Username} | Step 1  |
@@ -1658,7 +1652,6 @@ Feature: Validate sanity testing of Complete Business Flow
     When I click on "Mark As Paid" in the page details
     And I enter in modal "Paid Details" values from "PaymentRequest_Field_Values.xlsx"
     When I click modal button "Save"
-    And I wait for "2" seconds
     When I click modal button "Close"
 #   To Do:- Remove the refresh step once bug resolve for refresh behavior
     And I refresh the page
@@ -1684,7 +1677,6 @@ Feature: Validate sanity testing of Complete Business Flow
       | Title        | Narrative     | Unit Price | Quantity | Measurement | Advance Applied |
       | Extra Salary | The narrative | 30         | 1        | Feet        | 10              |
     When I close "Payment Line Items" modal by clicking the top right x button
-    And I wait for "2" seconds
     And I click on "Submit to Grantor" in the page details
     And I wait for "2" seconds
     When I re-login to "Grantor" app as "PM" user on "INTERNAL" portal
@@ -1697,9 +1689,6 @@ Feature: Validate sanity testing of Complete Business Flow
       | Funding Account             | Net Spent This Action | Advance Applied This Action |
       | {SavedValue:fundingAccount} | 30                    | 10                          |
     When I navigate to "Responsibilities" sub tab
-    When I enter the following values into flex table with id "---paymentRequest:-:ReimbursmentApproverTableId---" by clicking "New" :
-      | Name                     | Reimbursement |
-      | {SavedValue:PM Username} | NA            |
     When I enter the following values into flex table with id "---paymentRequest:-:ReimbursmentApproverTableId---" by clicking "New" :
       | Name                      | Reimbursement |
       | {SavedValue:EXE Username} | Step 1        |
@@ -1720,7 +1709,6 @@ Feature: Validate sanity testing of Complete Business Flow
     When I click on "Mark As Paid" in the page details
     And I enter in modal "Paid Details" values from "PaymentRequest_Field_Values.xlsx"
     When I click modal button "Save"
-    And I pause execution for "2" seconds
     When I click modal button "Close"
 #   To Do:- Remove the refresh step once bug resolve for refresh behavior
     Then I softly see field "Status" as "Paid"
