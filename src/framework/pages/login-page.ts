@@ -73,13 +73,13 @@ export class LoginPage extends BasePage {
       await this.page.waitForLoadState('domcontentloaded').catch(() => {});
 
       // Java: clickLoginDropDown() — wait for profile button then click
-      await this.profileDropdown.first().waitFor({ state: 'visible', timeout: 10000 });
+      await this.profileDropdown.first().waitFor({ state: 'visible', timeout: 5000 });
       await this.profileDropdown.first().click();
 
       // Java: clickLoginDropDownItems("Log Out" or "Logout") depending on Lightning/Classic
       const isLightning = this.page.url().includes('lightning');
       const logOutLink = isLightning ? this.logOutLinkLightning : this.logOutLinkClassic;
-      await logOutLink.first().waitFor({ state: 'visible', timeout: 10000 });
+      await logOutLink.first().waitFor({ state: 'visible', timeout: 5000 });
       await logOutLink.first().click();
       logger.info('Clicked Log Out link');
 
@@ -87,7 +87,7 @@ export class LoginPage extends BasePage {
       await this.page.context().clearCookies();
 
       // Wait for logout to complete — detect login page URL or wait for navigation
-      await this.page.waitForURL(/login|secur\/logout|Login/, { timeout: 15000 }).catch(() => {});
+      await this.page.waitForURL(/login|secur\/logout|Login/, { timeout: 8000 }).catch(() => {});
       logger.info('Logout complete — cookies cleared');
     } catch (e) {
       // Fallback: if profile dropdown not found, force-navigate to logout URL
@@ -140,10 +140,10 @@ export class LoginPage extends BasePage {
       const egmsHeader = this.page.locator(
         `//span[contains(@class, 'navbarBrandText')]`
       );
-      await egmsHeader.waitFor({ state: 'visible', timeout: 10000 });
+      await egmsHeader.waitFor({ state: 'visible', timeout: 5000 });
       logger.info('EGMS header visible — GovGrants app loaded');
     } catch {
-      logger.warn('EGMS header not found within 10s — may not be on GovGrants app page');
+      logger.warn('EGMS header not found within 5s — may not be on GovGrants app page');
     }
   }
 

@@ -76,11 +76,8 @@ export class NavigationPage extends BasePage {
       await this.waitForSpinner();
     }
 
-    // The tab click itself registers immediately, but the new tab's own page/sidebar
-    // content (e.g. its "My Tasks" accordion) can take a bit longer to actually swap in.
-    // Without this, a follow-up sidebar click can still land on the previous tab's
-    // "Pending Tasks" link before this tab's content has replaced it.
-    await this.page.waitForTimeout(4000);
+    // Minimal wait for UI stability after tab navigation
+    await this.page.waitForTimeout(500);
   }
 
   /**
@@ -120,6 +117,15 @@ export class NavigationPage extends BasePage {
       logger.info(`  Expanding sub-accordion: "${resolvedSub}"`);
       await subAccordion.first().dispatchEvent('click');
       await this.page.waitForTimeout(500);
+    }
+
+    // Extended wait for "Pending Tasks" to ensure sidebar content has fully swapped
+    // after tab navigation (prevents clicking stale elements from previous tab)
+    // This wait happens AFTER sidebar is loaded and accordions expanded, but BEFORE finding the link
+    if (resolvedContent.toLowerCase().includes('pending') && 
+        resolvedContent.toLowerCase().includes('task')) {
+      logger.info(`Extended wait for "${resolvedContent}" sidebar content to fully load`);
+      await this.page.waitForTimeout(5000);
     }
 
     // POC: find the sidebar link scoped to the subheader section (matching Selenium implementation)
@@ -181,7 +187,9 @@ export class NavigationPage extends BasePage {
     ).first();
 
     try {
-      const tabVisible = await desiredTab.isVisible({ timeout: 5000 }).catch(() => false);
+      // Give the sub-tab strip a bit more time to finish rendering before deciding
+      // whether the desired tab is directly visible or hidden in the "More Tabs" overflow.
+      const tabVisible = await desiredTab.isVisible({ timeout: 8000 }).catch(() => false);
       if (tabVisible) {
         await desiredTab.scrollIntoViewIfNeeded().catch(() => {});
         // Wait for element to be clickable before clicking
@@ -189,14 +197,23 @@ export class NavigationPage extends BasePage {
         // Use JavaScript click by default (matching Selenium)
         await this.clickHelper.jsClick(desiredTab);
       } else {
-        // Tab might be in "More Tabs" overflow
-        await moreTabs.scrollIntoViewIfNeeded().catch(() => {});
-        await this.waitHelper.waitUntilClickable(moreTabs, 10000);
-        await this.clickHelper.jsClick(moreTabs);
-        await desiredTab.waitFor({ state: 'visible', timeout: 5000 });
-        await desiredTab.scrollIntoViewIfNeeded().catch(() => {});
-        await this.waitHelper.waitUntilClickable(desiredTab, 10000);
-        await this.clickHelper.jsClick(desiredTab);
+        // Only chase the "More Tabs" overflow button if it actually exists on this page;
+        // otherwise re-check the desired tab instead of burning 10s on a non-existent button.
+        const moreTabsPresent = await moreTabs.isVisible({ timeout: 2000 }).catch(() => false);
+        if (moreTabsPresent) {
+          await moreTabs.scrollIntoViewIfNeeded().catch(() => {});
+          await this.waitHelper.waitUntilClickable(moreTabs, 10000);
+          await this.clickHelper.jsClick(moreTabs);
+          await desiredTab.waitFor({ state: 'visible', timeout: 5000 });
+          await desiredTab.scrollIntoViewIfNeeded().catch(() => {});
+          await this.waitHelper.waitUntilClickable(desiredTab, 10000);
+          await this.clickHelper.jsClick(desiredTab);
+        } else {
+          await desiredTab.waitFor({ state: 'visible', timeout: 8000 });
+          await desiredTab.scrollIntoViewIfNeeded().catch(() => {});
+          await this.waitHelper.waitUntilClickable(desiredTab, 10000);
+          await this.clickHelper.jsClick(desiredTab);
+        }
       }
     } catch (ex) {
       logger.warn(`Sub-tab click failed - Retrying with JavaScript: ${ex}`);
@@ -206,8 +223,11 @@ export class NavigationPage extends BasePage {
         await this.waitHelper.waitUntilClickable(desiredTab, 10000);
         await this.clickHelper.jsClick(desiredTab);
       } else {
-        await this.waitHelper.waitUntilClickable(moreTabs, 10000);
-        await this.clickHelper.jsClick(moreTabs);
+        const moreTabsPresent = await moreTabs.isVisible({ timeout: 2000 }).catch(() => false);
+        if (moreTabsPresent) {
+          await this.waitHelper.waitUntilClickable(moreTabs, 10000);
+          await this.clickHelper.jsClick(moreTabs);
+        }
         await desiredTab.waitFor({ state: 'visible', timeout: 5000 });
         await this.waitHelper.waitUntilClickable(desiredTab, 10000);
         await this.clickHelper.jsClick(desiredTab);

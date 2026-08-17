@@ -33,8 +33,14 @@ export class QuickSearchPage extends BasePage {
       if (this.savedValues.has('EGMS ID')) {
         actualSearchTerm = '{SavedValue:EGMS ID}';
         logger.info(`Search term "Record Id" will use saved EGMS ID`);
+      } else if (this.savedValues.has('Record Id')) {
+        // API-created records (e.g. via "I create a post award record") save their
+        // identifier under "Record Id" instead of "EGMS ID" since it's set before
+        // the UI ever loads the record's EGMS ID field.
+        actualSearchTerm = '{SavedValue:Record Id}';
+        logger.info(`Search term "Record Id" will use saved Record Id`);
       } else {
-        logger.warn(`Search term "Record Id" but EGMS ID not found in saved values`);
+        logger.warn(`Search term "Record Id" but neither EGMS ID nor Record Id found in saved values`);
       }
     }
     

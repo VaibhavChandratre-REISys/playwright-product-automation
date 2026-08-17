@@ -151,6 +151,14 @@ When(
     if (newPage) {
       this.page = newPage;
     }
+    
+    // Wait for page to fully load after icon click (especially for navigation actions like "Start")
+    await this.page.waitForLoadState('load', { timeout: 60000 }).catch(() => {});
+    await this.waitHelper.waitForSpinnerDisappear();
+    
+    // Smart wait for flex tables to be present and fully loaded
+    await this.waitHelper.waitForTable().catch(() => {});
+    await this.waitHelper.waitForFlexTablesToLoad();
   }
 );
 
@@ -449,6 +457,10 @@ When(
         }
         const cell = newRow.locator(`td:nth-child(${colPos})`).first();
         logger.info(`Enter flex table: column "${colName}" (pos ${colPos}) = "${cellValue}"`);
+        
+        // Scroll cell into view before interaction to prevent scrolling issues
+        await cell.scrollIntoViewIfNeeded();
+        await this.page.waitForTimeout(200);
 
         // Detect field type in the cell and fill accordingly
         const lookupInput = cell.locator("input[type='search']").first();
@@ -501,6 +513,13 @@ When(
             logger.info(`Enter flex table: selected "${cellValue}" with JavaScript click`);
           }
           await this.page.waitForTimeout(500);
+          
+          // Scroll to next cell to prevent scrolling to top
+          const nextColPos = colPos + 1;
+          if (nextColPos <= headers.length) {
+            const nextCell = newRow.locator(`td:nth-child(${nextColPos})`).first();
+            await nextCell.scrollIntoViewIfNeeded().catch(() => {});
+          }
           continue;
         }
 
@@ -584,6 +603,11 @@ When(
           // Wait for modal to close after saving
           await this.page.locator(`//div[contains(@class,'slds-modal__container')]`).waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {});
           await this.page.waitForTimeout(500);
+          
+          // Re-locate the cell after modal close to ensure it's still in view and focusable
+          const updatedCell = newRow.locator(`td:nth-child(${colPos})`).first();
+          await updatedCell.scrollIntoViewIfNeeded();
+          await this.page.waitForTimeout(300);
           continue;
         }
 

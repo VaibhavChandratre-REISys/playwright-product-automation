@@ -49,7 +49,7 @@ async function bypassIdentityPages(
   let lastPattern = '';
   let samePatternCount = 0;
 
-  for (let attempt = 0; attempt < 5; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     const currentUrl = page.url();
 
     // Check if current URL matches any identity interceptor pattern
@@ -132,11 +132,11 @@ export async function jwtLogin(
   // 2. Navigate to frontdoor URL
   const frontdoorUrl = buildFrontdoorUrl(session.instanceUrl, session.accessToken);
   logger.info(`[JWT] Navigating to frontdoor for ${username}`);
-  await page.goto(frontdoorUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.goto(frontdoorUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
 
   // 3. Wait for Salesforce multi-hop redirects to settle
   //    (ported from POC: networkidle then bounded retry on URL/content read)
-  await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+  await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
 
   // 3b. Bypass Salesforce identity/enrollment interceptor pages.
   //     Some users get chained prompts (passkey → 2FA → etc.) after frontdoor.
@@ -151,14 +151,14 @@ export async function jwtLogin(
   ).first();
 
   try {
-    await lightningShell.waitFor({ state: 'visible', timeout: 30000 });
+    await lightningShell.waitFor({ state: 'visible', timeout: 20000 });
   } catch {
     // Maybe identity page appeared after a delayed redirect — try bypass again
     await bypassIdentityPages(page, username, session.instanceUrl);
 
     // Re-check for Lightning shell after bypass
     try {
-      await lightningShell.waitFor({ state: 'visible', timeout: 15000 });
+      await lightningShell.waitFor({ state: 'visible', timeout: 10000 });
     } catch {
       // Check if we landed on an MFA/identity challenge page
       const currentUrl = page.url();

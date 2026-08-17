@@ -276,7 +276,27 @@ When(
       } catch (e) {
         logger.info('  No comment modal detected (expected if none present)');
       }
-      
+
+      // Check for a confirm-style modal that also requires text input (e.g. lightning-prompt)
+      logger.info('  Checking for confirm modal with input...');
+      const confirmModalInput = this.page.locator(
+        `//div[contains(@class,'modalContent confirm-modal-body')]//input | ` +
+        `//div[contains(@class,'modal__container')]//lightning-prompt//input | ` +
+        `//div[contains(@class,'modal__container')]//div[@class='confirm-modal']//input`
+      ).first();
+      const confirmModalVisible = await confirmModalInput.isVisible({ timeout: 1500 }).catch(() => false);
+      if (confirmModalVisible) {
+        logger.info('  Confirm modal with input detected, entering text...');
+        await confirmModalInput.fill('Automated Test');
+        const confirmButton = this.page.locator(
+          `//div[contains(@class,'modal__container')]//button[text()='OK' or text()='Yes' or text()='Continue']`
+        ).first();
+        await confirmButton.click();
+        logger.info('  ✓ Handled confirm modal with input');
+      } else {
+        logger.info('  No confirm modal with input detected (expected if none present)');
+      }
+
       // Smart wait for Salesforce page to be ready
       await this.waitHelper.waitForSpinnerDisappear();
     }
