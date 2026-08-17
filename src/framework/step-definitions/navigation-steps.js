@@ -168,17 +168,32 @@ When(
   /^I click on "([^"]*)" icon for "([^"]*)" inside flex table with id "([^"]*)" with wait for record$/,
   async function ( iconName, uniqueValue, tableId) {
     const ft = new FlexTablePage(this.page, this.savedValues);
+    const urlBefore = this.page.url();
+    
     // Retry with page refresh up to 10 times
+    let clicked = false;
     for (let i = 0; i < 10; i++) {
       try {
         await ft.clickTableActionIconById(tableId, iconName, uniqueValue);
-        return;
+        clicked = true;
+        break;
       } catch (e2) {
         await this.page.reload({ waitUntil: 'domcontentloaded' });
         await this.page.waitForLoadState('networkidle').catch(() => {});
       }
     }
-    await ft.clickTableActionIconById(tableId, iconName, uniqueValue);
+    if (!clicked) {
+      await ft.clickTableActionIconById(tableId, iconName, uniqueValue);
+    }
+    
+    // Only apply smart waits if URL changed (navigation occurred)
+    const urlAfter = this.page.url();
+    if (urlBefore !== urlAfter) {
+      await this.page.waitForLoadState('load', { timeout: 60000 }).catch(() => {});
+      await this.waitHelper.waitForSpinnerDisappear();
+      await this.waitHelper.waitForTable().catch(() => {});
+      await this.waitHelper.waitForFlexTablesToLoad();
+    }
   }
 );
 
