@@ -99,8 +99,11 @@ export class FlexTablePage extends BasePage {
       if (this.savedValues.has('EGMS ID')) {
         actualValue = '{SavedValue:EGMS ID}';
         logger.info(`Unique value "Record id" will use saved EGMS ID`);
+      } else if (this.savedValues.has('Record Id')) {
+        actualValue = '{SavedValue:Record Id}';
+        logger.info(`Unique value "Record id" will use saved Record Id`);
       } else {
-        logger.warn(`Unique value "Record id" but EGMS ID not found in saved values`);
+        logger.warn(`Unique value "Record id" but neither EGMS ID nor Record Id found in saved values`);
       }
     }
     
@@ -147,8 +150,11 @@ export class FlexTablePage extends BasePage {
       if (this.savedValues.has('EGMS ID')) {
         actualValue = '{SavedValue:EGMS ID}';
         logger.info(`Unique value "Record Id" will use saved EGMS ID`);
+      } else if (this.savedValues.has('Record Id')) {
+        actualValue = '{SavedValue:Record Id}';
+        logger.info(`Unique value "Record Id" will use saved Record Id`);
       } else {
-        logger.warn(`Unique value "Record Id" but EGMS ID not found in saved values`);
+        logger.warn(`Unique value "Record Id" but neither EGMS ID nor Record Id found in saved values`);
       }
     }
     

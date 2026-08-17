@@ -1469,16 +1469,44 @@ export class GrantorApiService {
    */
   private async applySubawardFilter(payload: any, filter: string): Promise<void> {
     const envFile = this.getEnvPropertiesFile();
-    const normalizedFilter = filter.toUpperCase();
 
-    // Handle user-based filter
-    if (filter.toLowerCase().includes('user')) {
-      const user = filter.replace(/user/gi, '').replace(/-/g, '').trim();
-      if (user && payload.Award?.[0]) {
-        payload.Award[0].OwnerId = await this.getIdOf('User', user);
+    // Handle user-ownership suffix, e.g. "default-Automation EXE user" or
+    // "SECOND_FOCUS_AREA_BUD_CAT_BUILDUP_YES-Automation EXE user". Mirrors Java
+    // GrantorPayloads: split off the "-Automation <User> user" suffix, apply the
+    // owner change, then continue applying the remaining base filter (if any).
+    const userSuffixIdx = filter.indexOf('-Automation');
+    if (userSuffixIdx !== -1 && filter.toLowerCase().endsWith('user')) {
+      const userPart = filter.substring(userSuffixIdx + 1); // "Automation EXE user"
+      const user = userPart.replace(/user/gi, '').trim(); // "Automation EXE"
+      const baseFilter = filter.substring(0, userSuffixIdx); // "default" / "SECOND_FOCUS_AREA_..."
+      if (user) {
+        const ownerId = await this.getIdOf('User', user);
+        // Award-shaped payload (activateStandaloneSubaward)
+        if (payload.Award?.[0]) {
+          payload.Award[0].OwnerId = ownerId;
+        }
+        // Grant-shaped payload (activateSubaward / standalone award creation)
+        if (payload.Grant?.[0]) {
+          payload.Grant[0].OwnerId = ownerId;
+        }
+      }
+      filter = baseFilter;
+    } else if (filter.toLowerCase().endsWith('user') && filter.toLowerCase().includes('automation')) {
+      // Whole string is just a user name, e.g. "Automation EXE user" — no base filter to apply.
+      const user = filter.replace(/user/gi, '').trim();
+      if (user) {
+        const ownerId = await this.getIdOf('User', user);
+        if (payload.Award?.[0]) {
+          payload.Award[0].OwnerId = ownerId;
+        }
+        if (payload.Grant?.[0]) {
+          payload.Grant[0].OwnerId = ownerId;
+        }
       }
       return;
     }
+
+    const normalizedFilter = filter.toUpperCase();
 
     switch (normalizedFilter) {
       // ── Activate Direct Grant (subaward) payload filters ────────────────

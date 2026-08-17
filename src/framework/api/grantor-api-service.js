@@ -1469,62 +1469,90 @@ export class GrantorApiService {
    */
    async applySubawardFilter(payload, filter) {
     const envFile = this.getEnvPropertiesFile();
-    const normalizedFilter = filter.toUpperCase();
 
-    // Handle user-based filter
-    if (filter.toLowerCase().includes('user')) {
-      const user = filter.replace(/user/gi, '').replace(/-/g, '').trim();
-      if (user && _optionalChain([payload, 'access', _5 => _5.Award, 'optionalAccess', _6 => _6[0]])) {
-        payload.Award[0].OwnerId = await this.getIdOf('User', user);
+    // Handle user-ownership suffix, e.g. "default-Automation EXE user" or
+    // "SECOND_FOCUS_AREA_BUD_CAT_BUILDUP_YES-Automation EXE user". Mirrors Java
+    // GrantorPayloads: split off the "-Automation <User> user" suffix, apply the
+    // owner change, then continue applying the remaining base filter (if any).
+    const userSuffixIdx = filter.indexOf('-Automation');
+    if (userSuffixIdx !== -1 && filter.toLowerCase().endsWith('user')) {
+      const userPart = filter.substring(userSuffixIdx + 1); // "Automation EXE user"
+      const user = userPart.replace(/user/gi, '').trim(); // "Automation EXE"
+      const baseFilter = filter.substring(0, userSuffixIdx); // "default" / "SECOND_FOCUS_AREA_..."
+      if (user) {
+        const ownerId = await this.getIdOf('User', user);
+        // Award-shaped payload (activateStandaloneSubaward)
+        if (_optionalChain([payload, 'access', _5 => _5.Award, 'optionalAccess', _6 => _6[0]])) {
+          payload.Award[0].OwnerId = ownerId;
+        }
+        // Grant-shaped payload (activateSubaward / standalone award creation)
+        if (_optionalChain([payload, 'access', _7 => _7.Grant, 'optionalAccess', _8 => _8[0]])) {
+          payload.Grant[0].OwnerId = ownerId;
+        }
+      }
+      filter = baseFilter;
+    } else if (filter.toLowerCase().endsWith('user') && filter.toLowerCase().includes('automation')) {
+      // Whole string is just a user name, e.g. "Automation EXE user" — no base filter to apply.
+      const user = filter.replace(/user/gi, '').trim();
+      if (user) {
+        const ownerId = await this.getIdOf('User', user);
+        if (_optionalChain([payload, 'access', _9 => _9.Award, 'optionalAccess', _10 => _10[0]])) {
+          payload.Award[0].OwnerId = ownerId;
+        }
+        if (_optionalChain([payload, 'access', _11 => _11.Grant, 'optionalAccess', _12 => _12[0]])) {
+          payload.Grant[0].OwnerId = ownerId;
+        }
       }
       return;
     }
+
+    const normalizedFilter = filter.toUpperCase();
 
     switch (normalizedFilter) {
       // ── Activate Direct Grant (subaward) payload filters ────────────────
       case 'PROJECTSTOP_NULL':
       case 'CONTRACTSTOP_NULL':
-        if (_optionalChain([payload, 'access', _7 => _7.Award, 'optionalAccess', _8 => _8[0]])) payload.Award[0].projectStop = null;
+        if (_optionalChain([payload, 'access', _13 => _13.Award, 'optionalAccess', _14 => _14[0]])) payload.Award[0].projectStop = null;
         break;
       case 'PROJECTSTOP_PRESENT':
       case 'CONTRACTSTOP_PRESENT':
-        if (_optionalChain([payload, 'access', _9 => _9.Award, 'optionalAccess', _10 => _10[0]])) payload.Award[0].projectStop = this.dateWithOffset(150);
+        if (_optionalChain([payload, 'access', _15 => _15.Award, 'optionalAccess', _16 => _16[0]])) payload.Award[0].projectStop = this.dateWithOffset(150);
         break;
       case 'CONTRACTUAL_YES':
-        if (_optionalChain([payload, 'access', _11 => _11.Award, 'optionalAccess', _12 => _12[0]])) payload.Award[0].contractual = 'Yes';
+        if (_optionalChain([payload, 'access', _17 => _17.Award, 'optionalAccess', _18 => _18[0]])) payload.Award[0].contractual = 'Yes';
         break;
 
       // ── Standalone Grant Award filters ──────────────────────────────────
       case 'NO_RISK_ASSESSMENT':
-        if (_optionalChain([payload, 'access', _13 => _13.Grant, 'optionalAccess', _14 => _14[0]])) payload.Grant[0].RiskAssessment_Required = 'No';
+        if (_optionalChain([payload, 'access', _19 => _19.Grant, 'optionalAccess', _20 => _20[0]])) payload.Grant[0].RiskAssessment_Required = 'No';
         break;
       case 'YES_RISK_ASSESSMENT':
-        if (_optionalChain([payload, 'access', _15 => _15.Grant, 'optionalAccess', _16 => _16[0]])) payload.Grant[0].RiskAssessment_Required = 'Yes';
+        if (_optionalChain([payload, 'access', _21 => _21.Grant, 'optionalAccess', _22 => _22[0]])) payload.Grant[0].RiskAssessment_Required = 'Yes';
         break;
       case 'NO_ADVANCE_PERMISSION':
-        if (_optionalChain([payload, 'access', _17 => _17.Grant, 'optionalAccess', _18 => _18[0]])) payload.Grant[0].IsAdvancePermitted = 'No';
+        if (_optionalChain([payload, 'access', _23 => _23.Grant, 'optionalAccess', _24 => _24[0]])) payload.Grant[0].IsAdvancePermitted = 'No';
         break;
       case 'IS_BUILDUP_FUNCTIONALITY_YES':
-        if (_optionalChain([payload, 'access', _19 => _19.Grant, 'optionalAccess', _20 => _20[0]])) payload.Grant[0].IsBuildUpFunctionality = 'Yes';
+        if (_optionalChain([payload, 'access', _25 => _25.Grant, 'optionalAccess', _26 => _26[0]])) payload.Grant[0].IsBuildUpFunctionality = 'Yes';
         break;
       case 'NO_PROGRAM_INCOME_ANTICIPATE':
-        if (_optionalChain([payload, 'access', _21 => _21.Grant, 'optionalAccess', _22 => _22[0]])) payload.Grant[0].IsProgramIncomeAnticipated = 'No';
+        if (_optionalChain([payload, 'access', _27 => _27.Grant, 'optionalAccess', _28 => _28[0]])) payload.Grant[0].IsProgramIncomeAnticipated = 'No';
         break;
       case 'NO_BUDGETREDIRECTIONTHRESHHOLD':
-        if (_optionalChain([payload, 'access', _23 => _23.Grant, 'optionalAccess', _24 => _24[0]])) payload.Grant[0].BudgetRedirectionThreshold = null;
+        if (_optionalChain([payload, 'access', _29 => _29.Grant, 'optionalAccess', _30 => _30[0]])) payload.Grant[0].BudgetRedirectionThreshold = null;
         break;
       case 'AMENDMENT_REQUEST':
-        if (_optionalChain([payload, 'access', _25 => _25.Grant, 'optionalAccess', _26 => _26[0]])) payload.Grant[0].AmendmentRequest = 'Yes';
+        if (_optionalChain([payload, 'access', _31 => _31.Grant, 'optionalAccess', _32 => _32[0]])) payload.Grant[0].AmendmentRequest = 'Yes';
         break;
       case 'AMENDMENT_REQUEST_BUILDUP_MATCH_YES':
-        if (_optionalChain([payload, 'access', _27 => _27.Grant, 'optionalAccess', _28 => _28[0]])) {
+        if (_optionalChain([payload, 'access', _33 => _33.Grant, 'optionalAccess', _34 => _34[0]])) {
           payload.Grant[0].AmendmentRequest = 'Yes';
           payload.Grant[0].IsBuildUpFunctionality = 'Yes';
           payload.Grant[0].IsMatchRequired = 'Yes';
         }
         break;
       case 'AMENDMENT_REQUEST_RISK_ASSESMENT_YES':
-        if (_optionalChain([payload, 'access', _29 => _29.Grant, 'optionalAccess', _30 => _30[0]])) {
+        if (_optionalChain([payload, 'access', _35 => _35.Grant, 'optionalAccess', _36 => _36[0]])) {
           payload.Grant[0].AmendmentRequest = 'Yes';
           payload.Grant[0].RiskAssessment_Required = 'No';
         }
@@ -1554,10 +1582,10 @@ export class GrantorApiService {
         break;
       }
       case 'NO_OBJECTIVE':
-        if (_optionalChain([payload, 'access', _31 => _31.Grant, 'optionalAccess', _32 => _32[0]])) payload.Grant[0].IsGoalsRequired = 'No';
+        if (_optionalChain([payload, 'access', _37 => _37.Grant, 'optionalAccess', _38 => _38[0]])) payload.Grant[0].IsGoalsRequired = 'No';
         break;
       case 'ADVANCE_PERMISSIBLE_YES_FOCUS_AREA_NO':
-        if (_optionalChain([payload, 'access', _33 => _33.Grant, 'optionalAccess', _34 => _34[0]])) {
+        if (_optionalChain([payload, 'access', _39 => _39.Grant, 'optionalAccess', _40 => _40[0]])) {
           payload.Grant[0].FocusAreaRequired = 'No';
           payload.Grant[0].IsAdvancePermitted = 'Yes';
         }
@@ -1568,7 +1596,7 @@ export class GrantorApiService {
         }];
         break;
       case 'ADVANCE_PERMISSIBLE_YES_FOCUS_AREA_NO_BUILDUP_YES_PROJECT_END_DATE':
-        if (_optionalChain([payload, 'access', _35 => _35.Grant, 'optionalAccess', _36 => _36[0]])) {
+        if (_optionalChain([payload, 'access', _41 => _41.Grant, 'optionalAccess', _42 => _42[0]])) {
           payload.Grant[0].IsAdvancePermitted = 'Yes';
           payload.Grant[0].FocusAreaRequired = 'No';
           payload.Grant[0].IsBuildUpFunctionality = 'Yes';
@@ -1576,14 +1604,14 @@ export class GrantorApiService {
         }
         break;
       case 'ADVANCE_YES_FOCUS_NO_PROGRAM_ANTICIPATED_NO':
-        if (_optionalChain([payload, 'access', _37 => _37.Grant, 'optionalAccess', _38 => _38[0]])) {
+        if (_optionalChain([payload, 'access', _43 => _43.Grant, 'optionalAccess', _44 => _44[0]])) {
           payload.Grant[0].IsAdvancePermitted = 'Yes';
           payload.Grant[0].FocusAreaRequired = 'No';
           payload.Grant[0].IsProgramIncomeAnticipated = 'No';
         }
         break;
       case 'ADVANCE_PERMIS_YES_FOCUS_AREA_NO_BUILDUP_YES':
-        if (_optionalChain([payload, 'access', _39 => _39.Grant, 'optionalAccess', _40 => _40[0]])) {
+        if (_optionalChain([payload, 'access', _45 => _45.Grant, 'optionalAccess', _46 => _46[0]])) {
           payload.Grant[0].IsAdvancePermitted = 'Yes';
           payload.Grant[0].FocusAreaRequired = 'No';
           payload.Grant[0].IsBuildUpFunctionality = 'Yes';
@@ -1595,7 +1623,7 @@ export class GrantorApiService {
         break;
       case 'SUBRECIPIENT_ORG_IND_USER':
       case 'ADVANCE_PERMIS_YES_FOCUS_AREA_NO_SUB_ORG_IND': {
-        if (_optionalChain([payload, 'access', _41 => _41.Grant, 'optionalAccess', _42 => _42[0]])) {
+        if (_optionalChain([payload, 'access', _47 => _47.Grant, 'optionalAccess', _48 => _48[0]])) {
           payload.Grant[0].InternalOrganization = await this.getIdOf('Account', 'Automation IND');
           if (normalizedFilter.includes('ADVANCE')) {
             payload.Grant[0].IsAdvancePermitted = 'Yes';
@@ -1605,13 +1633,13 @@ export class GrantorApiService {
         break;
       }
       case 'SUBRECIPIENT_ORG_SPI_USER': {
-        if (_optionalChain([payload, 'access', _43 => _43.Grant, 'optionalAccess', _44 => _44[0]])) {
+        if (_optionalChain([payload, 'access', _49 => _49.Grant, 'optionalAccess', _50 => _50[0]])) {
           payload.Grant[0].InternalOrganization = await this.getIdOf('Account', 'SAN DIEGO ELECTRICAL TRAINING TRUST');
         }
         break;
       }
       case 'AWARD_NO_SUPPORTINGDOC_PROGRAM':
-        if (_optionalChain([payload, 'access', _45 => _45.Grant, 'optionalAccess', _46 => _46[0]])) {
+        if (_optionalChain([payload, 'access', _51 => _51.Grant, 'optionalAccess', _52 => _52[0]])) {
           payload.Grant[0].Program = await this.getIdOf('Program__c', 'Automation Permanent No Supporting Doc Program');
         }
         break;

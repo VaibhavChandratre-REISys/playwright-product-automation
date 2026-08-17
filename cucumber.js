@@ -6,7 +6,6 @@ const common = {
     'src/framework/world/custom-world.ts',
     'src/framework/hooks/browser-hooks.ts',
     'src/framework/step-definitions/**/*.ts',
-    `src/${project}/step-definitions/**/*.ts`,
   ],
   requireModule: ['tsx/cjs'],
   format: [
@@ -36,6 +35,16 @@ module.exports = {
   product: {
     ...common,
     paths: ['src/product/features/**/*.feature'],
+    tags: process.env.TAGS || 'not @wip',
+  },
+  Alaska: {
+    ...common,
+    paths: ['src/alaska/features/**/*.feature'],
+    tags: process.env.TAGS || 'not @wip',
+  },
+  alaska: {
+    ...common,
+    paths: ['src/alaska/features/**/*.feature'],
     tags: process.env.TAGS || 'not @wip',
   },
 };
