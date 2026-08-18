@@ -960,9 +960,17 @@ When(
   /^I save the contact name as "([^"]*)"$/,
   async function ( key) {
     const pd = new PageDetailsPage(this.page, this.savedValues);
+    const resolvedKey = this.savedValues.resolve(key);
     const value = await pd.getFieldValue('Contact Name');
-    this.savedValues.set(key, value);
-    logger.info(`Saved contact name as "${key}" = "${value}"`);
+    
+    // Save the contact name with the provided key
+    this.savedValues.set(key, resolvedKey);
+    
+    // Also save as firstName (matching Selenium implementation)
+    this.savedValues.set('firstName', resolvedKey);
+    
+    logger.info(`Saved contact name as "${key}" = "${resolvedKey}"`);
+    logger.info(`Saved firstName = "${resolvedKey}"`);
   }
 );
 

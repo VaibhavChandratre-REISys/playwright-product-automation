@@ -695,7 +695,7 @@ Feature: Validate sanity testing of Complete Business Flow
     When I navigate to "Formula" content inside "Announcements" subheader on left panel
     And I click toggle button to select "Draft Formula Announcements"
     And I click on top right button "New" in flex table with id "---announcement:-:formulaAnnouncementTableId---"
-    And I enter "FormulaAnnouncement" values from "Announcement_Field_Values.xlsx"
+    And I enter "FormulaAnn_AdminUser" values from "Announcement_Field_Values.xlsx"
     And I click modal button "Continue"
     When I enter "Creation_Formula_ByApplicant" values from "Announcement_Field_Values.xlsx"
     And I click modal button "Save and Continue"
