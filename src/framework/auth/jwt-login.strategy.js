@@ -145,52 +145,100 @@ export async function jwtLogin(
   await bypassIdentityPages(page, username, session.instanceUrl);
 
   // 4. Wait for Lightning shell — this doubles as our MFA canary.
-  //    If this times out, enforcement behavior has changed.
+  //    Lightning components render inside shadow DOM, so standard CSS selectors
+  //    may not find them. We use a two-pronged approach:
+  //    a) Try CSS selectors for common Lightning shell elements
+  //    b) Fall back to URL + page.evaluate() to detect Lightning Aura app
   const lightningShell = page.locator(
-    '.slds-global-header, one-appnav, .oneHeader'
+    '.slds-global-header, one-appnav, .oneHeader, .lafAppLayoutHost, .oneCenterStage, one-app-nav-bar'
   ).first();
 
-  try {
-    await lightningShell.waitFor({ state: 'visible', timeout: 20000 });
-  } catch (e2) {
+  /**
+   * Check if Lightning has finished rendering by evaluating the Aura framework
+   * status or detecting key elements inside shadow DOM.
+   */
+  async function isLightningReady() {
+    try {
+      return await page.evaluate(() => {
+        // Check if Aura framework is initialized
+        if (typeof (window ).$A !== 'undefined') return true;
+        // Check for Lightning navigation bar in shadow DOM
+        const navBar = document.querySelector('one-app-nav-bar');
+        if (navBar) return true;
+        // Check for global header container (may be in light DOM on some orgs)
+        const header = document.querySelector('.oneHeader, .slds-global-header_container');
+        if (header) return true;
+        return false;
+      });
+    } catch (e2) {
+      return false;
+    }
+  }
+
+  /** Combined check: CSS locator OR JS-based Lightning detection */
+  async function waitForLightning(timeout) {
+    const deadline = Date.now() + timeout;
+    // First try the fast CSS locator path
+    try {
+      await lightningShell.waitFor({ state: 'visible', timeout: Math.min(timeout, 15000) });
+      return true;
+    } catch (e3) { /* fall through to JS-based check */ }
+
+    // Poll with JS evaluate for the remaining time
+    while (Date.now() < deadline) {
+      if (await isLightningReady()) return true;
+      await page.waitForTimeout(2000);
+    }
+    return false;
+  }
+
+  let lightningLoaded = await waitForLightning(30000);
+
+  if (!lightningLoaded) {
     // Maybe identity page appeared after a delayed redirect — try bypass again
     await bypassIdentityPages(page, username, session.instanceUrl);
+    lightningLoaded = await waitForLightning(15000);
+  }
 
-    // Re-check for Lightning shell after bypass
-    try {
-      await lightningShell.waitFor({ state: 'visible', timeout: 10000 });
-    } catch (e3) {
-      // Check if we landed on an MFA/identity challenge page
-      const currentUrl = page.url();
-      const body = await page.content().catch(() => '');
-      const bodyLower = body.toLowerCase();
+  if (!lightningLoaded) {
+    // Last resort: reload the page — slow sandboxes sometimes stall on initial load
+    logger.warn(`[JWT] Lightning shell not visible after bypass — reloading page for ${username}`);
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
+    lightningLoaded = await waitForLightning(20000);
+  }
 
-      const mfaSignals = [
-        'verify your identity', 'security key', 'authenticator app',
-        'verification code', 'two-factor', 'multi-factor',
-      ];
-      const hitMfa = mfaSignals.some((s) => bodyLower.includes(s));
+  if (!lightningLoaded) {
+    // Final diagnostics — check for MFA or login bounce
+    const currentUrl = page.url();
+    const body = await page.content().catch(() => '');
+    const bodyLower = body.toLowerCase();
 
-      if (hitMfa) {
-        throw new Error(
-          `[JWT] MFA challenge detected after frontdoor login for ${username}.\n` +
-          `  URL: ${currentUrl}\n` +
-          `  This should not happen with JWT+frontdoor. Debug the Connected App / permission set config.`
-        );
-      }
-      if (currentUrl.includes('/login') || bodyLower.includes('id="username"')) {
-        throw new Error(
-          `[JWT] Bounced to login page after frontdoor for ${username}.\n` +
-          `  URL: ${currentUrl}\n` +
-          `  Check the 'web' OAuth scope is enabled on the External Client App.`
-        );
-      }
+    const mfaSignals = [
+      'verify your identity', 'security key', 'authenticator app',
+      'verification code', 'two-factor', 'multi-factor',
+    ];
+    const hitMfa = mfaSignals.some((s) => bodyLower.includes(s));
+
+    if (hitMfa) {
       throw new Error(
-        `[JWT] Lightning shell not found after frontdoor login for ${username}.\n` +
+        `[JWT] MFA challenge detected after frontdoor login for ${username}.\n` +
         `  URL: ${currentUrl}\n` +
-        `  Expected .slds-global-header, one-appnav, or .oneHeader within 45s.`
+        `  This should not happen with JWT+frontdoor. Debug the Connected App / permission set config.`
       );
     }
+    if (currentUrl.includes('/login') || bodyLower.includes('id="username"')) {
+      throw new Error(
+        `[JWT] Bounced to login page after frontdoor for ${username}.\n` +
+        `  URL: ${currentUrl}\n` +
+        `  Check the 'web' OAuth scope is enabled on the External Client App.`
+      );
+    }
+    throw new Error(
+      `[JWT] Lightning shell not found after frontdoor login for ${username}.\n` +
+      `  URL: ${currentUrl}\n` +
+      `  Expected Lightning Aura framework ($A) or shell elements within 60s.`
+    );
   }
 
   logger.info(`[JWT] Authenticated — landed on: ${page.url()}`);

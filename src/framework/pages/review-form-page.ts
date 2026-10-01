@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator } from 'playwright';
 import { SavedValues } from '../utils/saved-values';
 import { logger } from '../utils/logger';
 

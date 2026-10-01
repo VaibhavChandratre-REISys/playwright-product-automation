@@ -885,6 +885,15 @@ export class FlexTablePage extends BasePage {
 
     await this.waitHelper.waitForFlexTablesToLoad();
 
+    // Wait for the specific table to appear in the DOM before looking for rows.
+    // After page navigations (e.g. clicking "View" on a review step), the
+    // Lightning component hosting the table may not have rendered yet.
+    const tableElement = this.page.locator(`xpath=${tableLocator}`).first();
+    await tableElement.waitFor({ state: 'attached', timeout: 30000 }).catch(() => {
+      logger.warn(`editFlexTableRowsInline: table "${resolvedId}" not found in DOM within 30s — proceeding to row lookup`);
+    });
+    await this.waitHelper.waitForFlexTablesToLoad();
+
     let columnMap = null;
 
     for (let r = 1; r < rawRows.length; r++) {
@@ -895,7 +904,7 @@ export class FlexTablePage extends BasePage {
       const currentRow = this.page.locator(
         `xpath=${tableLocator}//td//*[text()='${identifierValue}']/ancestor::tr[1]`
       ).first();
-      await currentRow.waitFor({ state: 'visible', timeout: 8000 });
+      await currentRow.waitFor({ state: 'visible', timeout: 15000 });
 
       // Build column mapping from currentRow (like Selenium) - only once
       if (columnMap === null) {

@@ -11,6 +11,7 @@ import { LoginPage } from '../pages/login-page';
 import { logger } from '../utils/logger';
 import { getProject } from '../utils/get-project';
 import { SalesforceWaitHelper } from '../utils/salesforce-wait-helper';
+import { ReviewFormPage } from '../pages/review-form-page';
 
 // ── Main tab ──────────────────────────────────────────────────────────────────
 
@@ -1264,7 +1265,6 @@ When(
     const resolved = this.savedValues.resolve(recommendation);
     logger.info(`Fill review form with recommendation: "${resolved}"`);
     
-    const { ReviewFormPage } = await import('../pages/review-form-page');
     const reviewForm = new ReviewFormPage(this.page, this.savedValues);
     await reviewForm.completeFillingReviewForm(resolved);
   }
