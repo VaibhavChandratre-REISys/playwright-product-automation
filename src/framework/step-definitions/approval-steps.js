@@ -51,6 +51,18 @@ When(
 When(
   /^I "([^"]*)" in the approval decision$/,
   async function ( approvalType) {
+    // Validate page context - if page is closed, get a fresh reference
+    try {
+      await this.page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+    } catch (e) {
+      logger.warn('Page context was closed, attempting to get fresh page reference...');
+      const pages = this.page.context().pages();
+      if (pages.length > 0) {
+        this.page = pages[pages.length - 1]; // Use the most recent page
+        await this.page.waitForLoadState('domcontentloaded', { timeout: 10000 });
+      }
+    }
+    
     const approval = new ApprovalPage(this.page, this.savedValues);
     
     // Wait for page to stabilize after clicking View/Start icon (matching Selenium flow)

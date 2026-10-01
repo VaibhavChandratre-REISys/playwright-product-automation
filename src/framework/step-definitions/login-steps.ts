@@ -96,18 +96,24 @@ const reLoginHandler = async function (
   const loginPage = new LoginPage(this.page, this.savedValues);
 
   try {
-    // Ensure page is stable before attempting logout
-    await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+    // Fast path for JWT grantor re-logins: clear cookies and use frontdoor directly
+    // instead of performing a full UI logout, which saves ~10-15s per re-login.
+    const isGrantee =
+      baseUrl.includes('.site.com') || baseUrl.includes('recipient');
+    const useJwt = config.SF_AUTH_MODE === 'jwt' && !isGrantee;
 
-    // Java: ggObjects.clickLogOut()
-    await loginPage.logout();
-
-    // Java: govgrants.perform().mainPage().navigateToPortal(portalType)
-    await loginPage.navigateToPortal(baseUrl, resolvedPortal);
-
-    // Java: govgrants.perform().mainPage().loginWithUserType(userType)
-    await loginPage.loginAs(baseUrl, user.username, user.password);
-    // Java: govgrants.perform().mainPage().waitForEgmsHeader();
+    if (useJwt) {
+      logger.info(`[Re-login] Fast JWT path for ${user.username}`);
+      await this.page.context().clearCookies();
+      await loginPage.navigateToPortal(baseUrl, resolvedPortal);
+      await loginPage.loginAs(baseUrl, user.username, user.password);
+    } else {
+      // Legacy path for password / grantee logins
+      await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+      await loginPage.logout();
+      await loginPage.navigateToPortal(baseUrl, resolvedPortal);
+      await loginPage.loginAs(baseUrl, user.username, user.password);
+    }
     await loginPage.waitForEgmsHeader();
   } catch (e) {
     // Java fallback: check for GovGrants Launcher Tab

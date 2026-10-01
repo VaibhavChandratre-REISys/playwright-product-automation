@@ -300,6 +300,16 @@ When(
       // Smart wait for Salesforce page to be ready
       await this.waitHelper.waitForSpinnerDisappear();
     }
+    
+    // For action buttons that change record state, ensure full page update completes
+    const actionButtons = ['submit to grantor', 'submit for approval', 'approve', 'reject', 'accept', 'conduct', 'notify'];
+    if (actionButtons.includes(resolved.toLowerCase())) {
+      logger.info(`  Waiting for record state update after: "${resolved}"`);
+      await this.page.waitForLoadState('load', { timeout: 60000 }).catch(() => {});
+      await this.waitHelper.waitForSpinnerDisappear();
+      await this.waitHelper.waitForTable().catch(() => {});
+      await this.waitHelper.waitForFlexTablesToLoad();
+    }
   }
 );
 

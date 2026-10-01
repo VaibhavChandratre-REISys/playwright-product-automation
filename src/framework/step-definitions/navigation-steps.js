@@ -150,6 +150,8 @@ When(
     const newPage = await this.windowHandler.postProcessing();
     if (newPage) {
       this.page = newPage;
+      // Extra wait for new page context to stabilize
+      await this.page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
     }
     
     // Wait for page to fully load after icon click (especially for navigation actions like "Start")
@@ -159,6 +161,9 @@ When(
     // Smart wait for flex tables to be present and fully loaded
     await this.waitHelper.waitForTable().catch(() => {});
     await this.waitHelper.waitForFlexTablesToLoad();
+    
+    // Additional wait for Salesforce components to fully render
+    await this.page.waitForTimeout(1000);
   }
 );
 
@@ -169,6 +174,9 @@ When(
   async function ( iconName, uniqueValue, tableId) {
     const ft = new FlexTablePage(this.page, this.savedValues);
     const urlBefore = this.page.url();
+    
+    // Use window handler to detect and switch to new tab if opened
+    await this.windowHandler.preProcessing();
     
     // Retry with page refresh up to 10 times
     let clicked = false;
@@ -186,7 +194,34 @@ When(
       await ft.clickTableActionIconById(tableId, iconName, uniqueValue);
     }
     
-    // Only apply smart waits if URL changed (navigation occurred)
+    // Handle new window/tab if opened
+    const newPage = await this.windowHandler.postProcessing();
+    if (newPage) {
+      this.page = newPage;
+      // Extra wait for new page context to stabilize
+      await this.page.waitForLoadState('domcontentloaded', { timeout: 30000 }).catch(() => {});
+    }
+    
+    // For Start icon, always wait for full page load
+    if (iconName.toLowerCase() === 'start') {
+      // Wait for navigation to complete
+      await this.page.waitForLoadState('load', { timeout: 60000 }).catch(() => {});
+      await this.page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
+      
+      // Wait for Salesforce components
+      await this.waitHelper.waitForSpinnerDisappear();
+      await this.waitHelper.waitForTable().catch(() => {});
+      await this.waitHelper.waitForFlexTablesToLoad();
+      
+      // Additional wait for approval decision component or other dynamic components to load
+      await this.page.waitForTimeout(2000);
+      
+      // Ensure page is still valid and ready
+      await this.page.waitForLoadState('domcontentloaded', { timeout: 10000 }).catch(() => {});
+      return;
+    }
+    
+    // For other icons, only apply smart waits if URL changed (navigation occurred)
     const urlAfter = this.page.url();
     if (urlBefore !== urlAfter) {
       await this.page.waitForLoadState('load', { timeout: 60000 }).catch(() => {});
