@@ -7,6 +7,15 @@ import { getProject } from '../utils/get-project';
 let _config: AppConfig | null = null;
 
 export function resolveEnvironmentFile(project: string, environment: string): string {
+  const injectedFile = process.env['CONFIG_ENV_FILE'];
+  if (injectedFile) {
+    const resolvedFile = path.resolve(injectedFile);
+    if (!fs.existsSync(resolvedFile)) {
+      throw new Error(`CONFIG_ENV_FILE does not exist: ${resolvedFile}`);
+    }
+    return resolvedFile;
+  }
+
   const envFileName = environment === 'afsauto-grantor' ? 'afs-grantor' : environment;
   const envRoot = path.resolve(__dirname, '../../../envs');
   const preferredFile = path.resolve(envRoot, project, `.env.${envFileName}`);
