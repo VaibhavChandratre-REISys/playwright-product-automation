@@ -1,9 +1,28 @@
+import * as fs from 'fs';
 import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { configSchema, AppConfig } from './config-schema';
 import { getProject } from '../utils/get-project';
 
 let _config: AppConfig | null = null;
+
+export function resolveEnvironmentFile(project: string, environment: string): string {
+  const envFileName = environment === 'afsauto-grantor' ? 'afs-grantor' : environment;
+  const envRoot = path.resolve(__dirname, '../../../envs');
+  const preferredFile = path.resolve(envRoot, project, `.env.${envFileName}`);
+  if (fs.existsSync(preferredFile)) return preferredFile;
+
+  const matches = fs.readdirSync(envRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => path.resolve(envRoot, entry.name, `.env.${envFileName}`))
+    .filter((file) => fs.existsSync(file));
+
+  if (matches.length === 1) return matches[0];
+  if (matches.length > 1) {
+    throw new Error(`Multiple environment files found for "${environment}": ${matches.join(', ')}`);
+  }
+  return preferredFile;
+}
 
 /**
  * Loads and validates the environment config once, caches it.
@@ -14,8 +33,7 @@ export function getConfig(): AppConfig {
 
   const project = getProject();
   const env = (process.env['ENV'] ?? 'auto').toLowerCase();
-
-  const envFile = path.resolve(__dirname, `../../../envs/${project}/.env.${env}`);
+  const envFile = resolveEnvironmentFile(project, env);
   dotenv.config({ path: envFile });
 
   const result = configSchema.safeParse(process.env);

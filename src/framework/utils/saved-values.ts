@@ -80,7 +80,10 @@ export class SavedValues {
         return caseInsensitiveValue;
       }
       // Fallback: try environment-specific properties files (matches POC's resolveValue())
-      const envFiles = ['AUTOEnvData', 'QAEnvData', 'ProLWCEnvData', 'UATRelatedTableID'];
+      const environment = (process.env['ENV'] ?? '').toLowerCase();
+      const envFiles = environment.includes('afsauto')
+        ? ['afsautoqa', 'AUTOEnvData', 'QAEnvData']
+        : ['AUTOEnvData', 'QAEnvData', 'ProLWCEnvData', 'UATRelatedTableID'];
       for (const file of envFiles) {
         const propValue = getProperty(file, trimmedKey);
         if (propValue) {

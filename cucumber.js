@@ -37,6 +37,14 @@ module.exports = {
     paths: ['src/product/features/**/*.feature'],
     tags: process.env.TAGS || 'not @wip',
   },
+  componentSanityPageLayout: {
+    ...common,
+    paths: [
+      'src/govgrant_framework/features/FrameworkComponenetLWC/ComponentSanity/Pagelayout.feature',
+      'src/govgrant_framework/features/FrameworkComponenetLWC/ComponentSanity/PageLayout1.feature',
+    ],
+    tags: process.env.TAGS || 'not @wip',
+  },
   Alaska: {
     ...common,
     paths: ['src/alaska/features/**/*.feature'],

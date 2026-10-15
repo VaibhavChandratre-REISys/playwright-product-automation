@@ -838,17 +838,22 @@ Then(
   async function (this: CustomWorld, usage: string, blockName: string) {
     const resolved = this.savedValues.resolve(blockName);
     const locator = this.page.locator(
-      `//*[contains(@class,'panel-heading') or contains(@class,'slds-card__header') or contains(@class,'section-header')]//*[normalize-space(text())='${resolved}'] | ` +
-      `//h2[normalize-space(text())='${resolved}'] | //h3[normalize-space(text())='${resolved}']`
+      `//c-page-block-section//h2[.//a[@title='${resolved}']] | ` +
+      `//c-page-block-section//h2[contains(@class,'text-heading') and normalize-space(text())='${resolved}'] | ` +
+      `//c-page-block-section//span[contains(@class,'text-heading') and normalize-space(text())='${resolved}'] | ` +
+      `//c-page-block-section//span[normalize-space(text())='${resolved}'] | ` +
+      `//c-lwc-flex-table//span[contains(text(),'${resolved}')] | ` +
+      `//c-file-upload//a[contains(text(),'${resolved}')] | ` +
+      `//span[@title='${resolved}'] | ` +
+      `//div[@class='slds-tabs_default']//ul//li[@title='${resolved}']`
     ).first();
     const shouldExist = !usage.includes('not') && !usage.includes('cannot');
-    try {
-      if (shouldExist) {
-        await expect(locator).toBeVisible({ timeout: 10000 });
-      } else {
-        await expect(locator).toBeHidden({ timeout: 5000 });
-      }
-    } catch { /* soft */ }
+    const assertion = usage.startsWith('softly') ? expect.soft(locator) : expect(locator);
+    if (shouldExist) {
+      await assertion.toBeVisible({ timeout: 10000 });
+    } else {
+      await assertion.toBeHidden({ timeout: 5000 });
+    }
   }
 );
 
@@ -860,13 +865,12 @@ Then(
       `//*[contains(@class,'panel-heading') or contains(@class,'slds-card__header')]//*[normalize-space(text())='${resolved}']`
     ).first();
     const shouldExist = !usage.includes('cannot');
-    try {
-      if (shouldExist) {
-        await expect(locator).toBeVisible({ timeout: 10000 });
-      } else {
-        await expect(locator).toBeHidden({ timeout: 5000 });
-      }
-    } catch { /* soft */ }
+    const assertion = usage.startsWith('softly') ? expect.soft(locator) : expect(locator);
+    if (shouldExist) {
+      await assertion.toBeVisible({ timeout: 10000 });
+    } else {
+      await assertion.toBeHidden({ timeout: 5000 });
+    }
   }
 );
 

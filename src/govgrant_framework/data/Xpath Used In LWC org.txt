@@ -1,0 +1,68 @@
+for Flex table "New" button
+//c-lwc-flex-table[@data-flextablename='Programs']//lightning-button/button[@title='New']
+
+//div//lightning-button/button[text()='Save and Continue']
+
+//flexipage-component2[@data-component-id='GNT_sideBarLwc']//div[@data-my-id='leftPanel']//li//span[@class='slds-accordion__summary-content']
+//flexipage-component2[@data-component-id='GNT_sideBarLwc']//div[@data-my-id='leftPanel']//li//span
+
+Strategic plan table id = //[@data-flextablename=StrategicPlansGrantor']
+
+Notes and Attachments
+//*[@data-flextablename='InternalProgramContentNotes']//div//c-fieldlwc[@class='fields']//input
+//lightning-menu-item[@title='Delete']
+//lightning-menu-item[@title='View']
+
+//c-lwc-flex-table[@data-flextablename='AssociateProgramContacts']//*[@title='Associate' or text()='Associate']
+//c-lwc-flex-table[@data-flextablename='AssociateProgramContacts']//lightning-button/button[@title='Associate']
+
+if(!I.amPerforming().browserOperationsTo().getCurrentUrl().contains("lightning")) {}
+
+FWLWC=https://test8-internal--frwklwcaut.sandbox.lightning.force.com/one/one.app
+
+Consumer key
+3MVG9Yb5IgqnkB4rr0P0YQvg0Nymcbc7DCffD9_vjpZ90gBaQtGkocMDwffuCUs5SmuyOWffhq2.zDgQEYDII
+
+Consumer Secrete
+602E8F44B6C42A0E40F434DB9C13C76E96DAF72BC651559C967C35197C33FC5D
+
+12-02-2024
+//div[contains(@class,'slds-modal__content')]/preceding-sibling::header//h2[text()='Add Attachments']
+//div[@class='headerTitle']//span[contains(text(),'Attachments')]//parent::div[@class='headerTitle']/following-sibling::lightning-button/*[text()='Add']
+
+step progress bar
+//div//c-step-progressbar//ul[@role='listbox']//lightning-progress-step
+
+Action button
+//lightning-button-group//lightning-button//button[@title='Cancel']
+
+//c-page-block-section//span[contains(@class,'slds-text-title_bold pointer')]
+
+page block help icon (i)
+//span[contains(@class,'header-title') and contains(text(),'Contacts')]//following-sibling::lightning-icon/span/lightning-primitive-icon
+
+Modal Component
+//lightning-button//button[text()='Save and Continue']
+//lightning-formatted-rich-text//span[text()[normalize-space() = 'Test Automation header instruction']]
+//lightning-formatted-text[text()='Program Name is required to save under Program Information']
+//lightning-tab-bar//ul//li[@title='Program Information']
+//header[contains(@class,'modal-header')]//h2[text()='Create Program']
+//lightning-primitive-bubble//div[contains(text(),'This is a program abbreviation as determined by the internal organization')]
+//label[contains(text(),' Type')]/parent::div//lightning-helptext//lightning-button-icon
+//lightning-primitive-bubble//div[contains(text(),'Identifies the organization that is the primary funder for this program.')]
+//label[@class='slds-text-title helpTextPost' and contains(text(),'Automation help text post')]
+//c-lwc-flex-table[@data-flextablename='AssociateProgramContacts']//table
+//lightning-formatted-text[@title='Automation Program For Test']/ancestor::td/preceding-sibling::td//lightning-menu-item[@title='Delete']
+
+Send Email Component
+//strong[text()='Cc']/parent::label/parent::div/preceding-sibling::div//input
+//strong[text()='Cc']/parent::label/parent::div/preceding-sibling::div//span[@title='External']
+//strong[text()='To']/parent::label/following-sibling::div//input[contains(@class,'input')]
+//*[contains(@class,'slds-icon')]/parent::span/parent::span[contains(@class,'option-icon')]/following-sibling::span/span[contains(text(),'Automation Admin')]
+//strong[contains(text(),'Body Content')]/parent::label/following-sibling::div
+//div[@class='ql-editor slds-rich-text-area__content slds-grow slds-text-color_weak']/p
+//div[@class='slds-form-element__control']//ul/li/button[@title='Bold']/lightning-primitive-icon
+//div[contains(@class,'slds-alert_error')]//h2[contains(text(),'Please add subject')]
+//lightning-formatted-text[contains(text(),'Body Content')]/parent::p/following-sibling::p//p[contains(text(),'test subject modal is closed')]
+//strong[normalize-space(text()='Send Copy (Cc) to Me')]/parent::label/following-sibling::div//span[@class='slds-checkbox']
+//strong[normalize-space(text()='Send Copy (Cc) to Me')]/parent::label/following-sibling::div//input[@type='checkbox']

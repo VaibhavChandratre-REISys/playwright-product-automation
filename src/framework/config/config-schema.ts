@@ -2,7 +2,10 @@ import { z } from 'zod';
 
 export const configSchema = z.object({
   PROJECT: z.string().default('nysed'),
-  ENV: z.enum(['qa', 'auto', 'ny', 'uat', 'prodcopy', 'merge-grantor']).default('auto'),
+  ENV: z.preprocess(
+    (value) => typeof value === 'string' ? value.toLowerCase() : value,
+    z.enum(['qa', 'auto', 'ny', 'uat', 'prodcopy', 'merge-grantor', 'afsauto-grantor'])
+  ).default('auto'),
   BROWSER: z.enum(['chromium', 'firefox', 'webkit']).default('chromium'),
   HEADLESS: z
     .string()

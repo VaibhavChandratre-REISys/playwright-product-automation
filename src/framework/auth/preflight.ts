@@ -7,18 +7,18 @@
  *         npx ts-node src/framework/auth/preflight.ts
  */
 
-import * as path from 'path';
 import * as dotenv from 'dotenv';
 import { chromium } from 'playwright';
 import { mintSession, buildFrontdoorUrl } from './salesforce-jwt';
 import { AppConfig, configSchema } from '../config/config-schema';
+import { resolveEnvironmentFile } from '../config/config-loader';
 import { getProject } from '../utils/get-project';
 
 // ── Load config ──────────────────────────────────────────────────────────────
 
 const project = getProject();
 const env = (process.env['ENV'] ?? 'auto').toLowerCase();
-const envFile = path.resolve(__dirname, `../../../envs/${project}/.env.${env}`);
+const envFile = resolveEnvironmentFile(project, env);
 dotenv.config({ path: envFile });
 
 const result = configSchema.safeParse(process.env);

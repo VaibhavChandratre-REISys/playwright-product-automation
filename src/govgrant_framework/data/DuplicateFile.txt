@@ -1,0 +1,11 @@
+1. private grp :
+- Members of this group see your post in the What I Follow feed. 
+- Group members that are mentioned in the post see the post in the What I Follow
+
+
+
+
+
+BUG_46363_PASS
+
+46975 Internal - Enhanced Grid - overall total is not getting changed if we edit / delete any record

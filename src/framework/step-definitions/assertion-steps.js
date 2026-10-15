@@ -838,17 +838,22 @@ Then(
   async function ( usage, blockName) {
     const resolved = this.savedValues.resolve(blockName);
     const locator = this.page.locator(
-      `//*[contains(@class,'panel-heading') or contains(@class,'slds-card__header') or contains(@class,'section-header')]//*[normalize-space(text())='${resolved}'] | ` +
-      `//h2[normalize-space(text())='${resolved}'] | //h3[normalize-space(text())='${resolved}']`
+      `//c-page-block-section//h2[.//a[@title='${resolved}']] | ` +
+      `//c-page-block-section//h2[contains(@class,'text-heading') and normalize-space(text())='${resolved}'] | ` +
+      `//c-page-block-section//span[contains(@class,'text-heading') and normalize-space(text())='${resolved}'] | ` +
+      `//c-page-block-section//span[normalize-space(text())='${resolved}'] | ` +
+      `//c-lwc-flex-table//span[contains(text(),'${resolved}')] | ` +
+      `//c-file-upload//a[contains(text(),'${resolved}')] | ` +
+      `//span[@title='${resolved}'] | ` +
+      `//div[@class='slds-tabs_default']//ul//li[@title='${resolved}']`
     ).first();
     const shouldExist = !usage.includes('not') && !usage.includes('cannot');
-    try {
-      if (shouldExist) {
-        await expect(locator).toBeVisible({ timeout: 10000 });
-      } else {
-        await expect(locator).toBeHidden({ timeout: 5000 });
-      }
-    } catch (e5) { /* soft */ }
+    const assertion = usage.startsWith('softly') ? expect.soft(locator) : expect(locator);
+    if (shouldExist) {
+      await assertion.toBeVisible({ timeout: 10000 });
+    } else {
+      await assertion.toBeHidden({ timeout: 5000 });
+    }
   }
 );
 
@@ -860,13 +865,12 @@ Then(
       `//*[contains(@class,'panel-heading') or contains(@class,'slds-card__header')]//*[normalize-space(text())='${resolved}']`
     ).first();
     const shouldExist = !usage.includes('cannot');
-    try {
-      if (shouldExist) {
-        await expect(locator).toBeVisible({ timeout: 10000 });
-      } else {
-        await expect(locator).toBeHidden({ timeout: 5000 });
-      }
-    } catch (e6) { /* soft */ }
+    const assertion = usage.startsWith('softly') ? expect.soft(locator) : expect(locator);
+    if (shouldExist) {
+      await assertion.toBeVisible({ timeout: 10000 });
+    } else {
+      await assertion.toBeHidden({ timeout: 5000 });
+    }
   }
 );
 
@@ -885,7 +889,7 @@ Then(
         } else {
           await expect(locator).toBeVisible({ timeout: 5000 });
         }
-      } catch (e7) { /* soft */ }
+      } catch (e5) { /* soft */ }
     }
   }
 );
@@ -905,7 +909,7 @@ Then(
         } else {
           await expect(locator).toBeVisible({ timeout: 5000 });
         }
-      } catch (e8) { /* soft */ }
+      } catch (e6) { /* soft */ }
     }
   }
 );
@@ -922,7 +926,7 @@ Then(
     ).first();
     try {
       await expect(editInput).toBeHidden({ timeout: 5000 });
-    } catch (e9) { /* soft */ }
+    } catch (e7) { /* soft */ }
   }
 );
 
@@ -940,7 +944,7 @@ Then(
       } else {
         await expect(input).toBeVisible({ timeout: 10000 });
       }
-    } catch (e10) { /* soft */ }
+    } catch (e8) { /* soft */ }
   }
 );
 
@@ -957,7 +961,7 @@ Then(
       } else {
         await expect(field).toBeVisible({ timeout: 10000 });
       }
-    } catch (e11) { /* soft */ }
+    } catch (e9) { /* soft */ }
   }
 );
 
@@ -968,7 +972,7 @@ Then(
     const input = this.page.locator(
       `//c-fieldlwc[@data-fieldapiname='${resolved}']//input | //div[@data-field_api_name='${resolved}']//input`
     ).first();
-    try { await expect(input).toBeHidden({ timeout: 5000 }); } catch (e12) { /* soft */ }
+    try { await expect(input).toBeHidden({ timeout: 5000 }); } catch (e10) { /* soft */ }
   }
 );
 
@@ -979,7 +983,7 @@ Then(
     const input = this.page.locator(
       `//c-fieldlwc[@data-fieldapiname='${resolved}']//input`
     ).first();
-    try { await expect(input).toBeHidden({ timeout: 5000 }); } catch (e13) { /* soft */ }
+    try { await expect(input).toBeHidden({ timeout: 5000 }); } catch (e11) { /* soft */ }
   }
 );
 
@@ -991,7 +995,7 @@ Then(
     const input = this.page.locator(
       `//c-fieldlwc[@data-fieldapiname='${resolvedField}']//input | //div[@data-field_api_name='${resolvedField}']//input`
     ).first();
-    try { await expect(input).toHaveValue(resolvedValue, { timeout: 10000 }); } catch (e14) { /* soft */ }
+    try { await expect(input).toHaveValue(resolvedValue, { timeout: 10000 }); } catch (e12) { /* soft */ }
   }
 );
 
@@ -1002,7 +1006,7 @@ Then(
     const checkbox = this.page.locator(
       `//div[@data-field_api_name='${resolved}']//input[@type='checkbox'] | //c-fieldlwc[@data-fieldapiname='${resolved}']//input[@type='checkbox']`
     ).first();
-    try { await expect(checkbox).toBeVisible({ timeout: 10000 }); } catch (e15) { /* soft */ }
+    try { await expect(checkbox).toBeVisible({ timeout: 10000 }); } catch (e13) { /* soft */ }
   }
 );
 
@@ -1013,7 +1017,7 @@ Then(
     const textarea = this.page.locator(
       `//div[@data-field_api_name='${resolved}']//textarea | //c-fieldlwc[@data-fieldapiname='${resolved}']//textarea`
     ).first();
-    try { await expect(textarea).toBeVisible({ timeout: 10000 }); } catch (e16) { /* soft */ }
+    try { await expect(textarea).toBeVisible({ timeout: 10000 }); } catch (e14) { /* soft */ }
   }
 );
 
@@ -1029,7 +1033,7 @@ Then(
     try {
       if (shouldSee) { await expect(checkbox).toBeVisible({ timeout: 10000 }); }
       else { await expect(checkbox).toBeHidden({ timeout: 5000 }); }
-    } catch (e17) { /* soft */ }
+    } catch (e15) { /* soft */ }
   }
 );
 
@@ -1047,7 +1051,7 @@ Then(
       } else {
         await expect(checkbox).toBeChecked({ timeout: 10000 });
       }
-    } catch (e18) { /* soft */ }
+    } catch (e16) { /* soft */ }
   }
 );
 
@@ -1058,7 +1062,7 @@ Then(
     const editInput = this.page.locator(
       `//dt//*[contains(text(),'${resolved}')]//ancestor::dt//following-sibling::dd//input[not(@disabled)]`
     ).first();
-    try { await expect(editInput).toBeHidden({ timeout: 5000 }); } catch (e19) { /* soft */ }
+    try { await expect(editInput).toBeHidden({ timeout: 5000 }); } catch (e17) { /* soft */ }
   }
 );
 
@@ -1078,7 +1082,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e20) { /* soft */ }
+    } catch (e18) { /* soft */ }
   }
 );
 
@@ -1098,7 +1102,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e21) { /* soft */ }
+    } catch (e19) { /* soft */ }
   }
 );
 
@@ -1117,7 +1121,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e22) { /* soft */ }
+    } catch (e20) { /* soft */ }
   }
 );
 
@@ -1136,7 +1140,7 @@ Then(
       } else {
         await expect(btn).toBeVisible({ timeout: 10000 });
       }
-    } catch (e23) { /* soft */ }
+    } catch (e21) { /* soft */ }
   }
 );
 
@@ -1147,7 +1151,7 @@ Then(
     const btn = this.page.locator(
       `//div[contains(@class,'modal')]//button[text()='${resolved}' or @title='${resolved}']`
     ).first();
-    try { await expect(btn).toBeVisible({ timeout: 10000 }); } catch (e24) { /* soft */ }
+    try { await expect(btn).toBeVisible({ timeout: 10000 }); } catch (e22) { /* soft */ }
   }
 );
 
@@ -1179,7 +1183,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e25) { /* soft */ }
+    } catch (e23) { /* soft */ }
   }
 );
 
@@ -1200,7 +1204,7 @@ Then(
       } else {
         await expect(btn).toBeVisible({ timeout: 10000 });
       }
-    } catch (e26) { /* soft */ }
+    } catch (e24) { /* soft */ }
   }
 );
 
@@ -1213,7 +1217,7 @@ Then(
     const btn = this.page.locator(
       `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//button[text()='${resolved}' or @title='${resolved}']`
     ).first();
-    try { await expect(btn).toBeHidden({ timeout: 5000 }); } catch (e27) { /* soft */ }
+    try { await expect(btn).toBeHidden({ timeout: 5000 }); } catch (e25) { /* soft */ }
   }
 );
 
@@ -1232,7 +1236,7 @@ Then(
       } else {
         await expect(btn).toBeVisible({ timeout: 10000 });
       }
-    } catch (e28) { /* soft */ }
+    } catch (e26) { /* soft */ }
   }
 );
 
@@ -1251,7 +1255,7 @@ Then(
     try {
       if (shouldSee) { await expect(locator).toBeVisible({ timeout: 10000 }); }
       else { await expect(locator).toBeHidden({ timeout: 5000 }); }
-    } catch (e29) { /* soft */ }
+    } catch (e27) { /* soft */ }
   }
 );
 
@@ -1268,7 +1272,7 @@ Then(
     try {
       if (shouldSee) { await expect(locator).toBeVisible({ timeout: 10000 }); }
       else { await expect(locator).toBeHidden({ timeout: 5000 }); }
-    } catch (e30) { /* soft */ }
+    } catch (e28) { /* soft */ }
   }
 );
 
@@ -1280,7 +1284,7 @@ Then(
     const locator = this.page.locator(
       `//dt//*[contains(text(),'${resolvedField}')]//ancestor::dt//following-sibling::dd//*[contains(text(),'${resolvedValue}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e31) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e29) { /* soft */ }
   }
 );
 
@@ -1293,7 +1297,7 @@ Then(
       `//c-fieldlwc[@data-fieldapiname='${resolvedField}']//*[contains(text(),'${resolvedValue}')] | ` +
       `//div[@data-field_api_name='${resolvedField}']//*[contains(text(),'${resolvedValue}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e32) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e30) { /* soft */ }
   }
 );
 
@@ -1320,7 +1324,7 @@ Then(
     const locator = this.page.locator(
       `//*[normalize-space(text())='${resolvedBlock}']/ancestor::div[contains(@class,'panel')]//dt//*[contains(text(),'${resolvedField}')]//ancestor::dt//following-sibling::dd//*[contains(text(),'${resolvedValue}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e33) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e31) { /* soft */ }
   }
 );
 
@@ -1338,7 +1342,7 @@ Then(
     const locator = this.page.locator(
       `//dt//*[contains(text(),'${resolved}')]//ancestor::dt//following-sibling::dd//*[contains(text(),'${todayStr}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e34) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e32) { /* soft */ }
   }
 );
 
@@ -1390,7 +1394,7 @@ Then(
     const locator = this.page.locator(
       `//div[contains(@class,'modal')]//*[contains(text(),'${resolved}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e35) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e33) { /* soft */ }
   }
 );
 
@@ -1412,7 +1416,7 @@ Then(
     const btn = this.page.locator(
       `//div[contains(@class,'modal')]//button[text()='${resolved}']`
     ).first();
-    try { await expect(btn).toBeVisible({ timeout: 10000 }); } catch (e36) { /* soft */ }
+    try { await expect(btn).toBeVisible({ timeout: 10000 }); } catch (e34) { /* soft */ }
   }
 );
 
@@ -1438,7 +1442,7 @@ Then(
     const locator = this.page.locator(
       `//*[contains(@class,'helptext') or contains(@class,'tooltip') or contains(@class,'popover')]//*[contains(text(),'${resolved}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e37) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e35) { /* soft */ }
   }
 );
 
@@ -1458,7 +1462,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e38) { /* soft */ }
+    } catch (e36) { /* soft */ }
   }
 );
 
@@ -1480,7 +1484,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e39) { /* soft */ }
+    } catch (e37) { /* soft */ }
   }
 );
 
@@ -1499,7 +1503,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e40) { /* soft */ }
+    } catch (e38) { /* soft */ }
   }
 );
 
@@ -1517,7 +1521,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e41) { /* soft */ }
+    } catch (e39) { /* soft */ }
   }
 );
 
@@ -1533,7 +1537,7 @@ Then(
       `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//td//a//span[text()='${resolved}'] | ` +
       `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//td//button[text()='${resolved}']`
     ).first();
-    try { await expect(btn).toBeVisible({ timeout: 10000 }); } catch (e42) { /* soft */ }
+    try { await expect(btn).toBeVisible({ timeout: 10000 }); } catch (e40) { /* soft */ }
   }
 );
 
@@ -1554,7 +1558,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e43) { /* soft */ }
+    } catch (e41) { /* soft */ }
   }
 );
 
@@ -1567,7 +1571,7 @@ Then(
     const locator = this.page.locator(
       `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//*[normalize-space(text())='${resolved}']`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e44) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e42) { /* soft */ }
   }
 );
 
@@ -1584,7 +1588,7 @@ Then(
     const locator = this.page.locator(
       `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//*[contains(text(),'${resolved}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e45) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e43) { /* soft */ }
   }
 );
 
@@ -1602,7 +1606,7 @@ Then(
     const locator = this.page.locator(
       `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//td//*[contains(text(),'${resolved}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e46) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e44) { /* soft */ }
   }
 );
 
@@ -1617,7 +1621,7 @@ Then(
     const locator = this.page.locator(
       `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//*[contains(text(),'${resolved}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e47) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e45) { /* soft */ }
   }
 );
 
@@ -1669,7 +1673,7 @@ Then(
     try {
       if (shouldEqual) { expect(val1).toBe(val2); }
       else { expect(val1).not.toBe(val2); }
-    } catch (e48) { /* soft */ }
+    } catch (e46) { /* soft */ }
   }
 );
 
@@ -1697,7 +1701,7 @@ Then(
     try {
       if (shouldSee) { await expect(locator).toBeVisible({ timeout: 10000 }); }
       else { await expect(locator).toBeHidden({ timeout: 5000 }); }
-    } catch (e49) { /* soft */ }
+    } catch (e47) { /* soft */ }
   }
 );
 
@@ -1725,7 +1729,7 @@ Then(
     const locator = this.page.locator(
       `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//*[contains(text(),'${resolved}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e50) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e48) { /* soft */ }
   }
 );
 
@@ -1739,7 +1743,7 @@ Then(
     const locator = this.page.locator(
       `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//input[contains(@placeholder,'Search') or contains(@class,'search')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e51) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e49) { /* soft */ }
   }
 );
 
@@ -1751,7 +1755,7 @@ Then(
     const locator = this.page.locator(
       `//div[contains(@class,'search')]//input | //input[contains(@class,'search')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e52) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e50) { /* soft */ }
   }
 );
 
@@ -1777,7 +1781,7 @@ Then(
     const fileLocator = this.page.locator(
       `//*[contains(text(),'${resolved}') or contains(@title,'${resolved}')]`
     ).first();
-    try { await expect(fileLocator).toBeVisible({ timeout: 10000 }); } catch (e53) { /* soft */ }
+    try { await expect(fileLocator).toBeVisible({ timeout: 10000 }); } catch (e51) { /* soft */ }
     logger.info(`[KSDE] Verified file "${resolved}" in My Workspace Files`);
   }
 );
@@ -1792,9 +1796,9 @@ Then(
     
     const shouldSee = usage.includes('see') && !usage.includes('cannot');
     if (shouldSee) {
-      try { await expect(userLocator).toBeVisible({ timeout: 10000 }); } catch (e54) { /* soft */ }
+      try { await expect(userLocator).toBeVisible({ timeout: 10000 }); } catch (e52) { /* soft */ }
     } else {
-      try { await expect(userLocator).not.toBeVisible({ timeout: 10000 }); } catch (e55) { /* soft */ }
+      try { await expect(userLocator).not.toBeVisible({ timeout: 10000 }); } catch (e53) { /* soft */ }
     }
     logger.info(`[KSDE] Reassign box user "${resolved}" check (${usage})`);
   }
@@ -1832,7 +1836,7 @@ Then(
   async function ( _usage, text) {
     const resolved = this.savedValues.resolve(text);
     const locator = this.page.locator(`//div[@id='allItemsList']//*[contains(text(),'${resolved}')]`).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e56) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e54) { /* soft */ }
   }
 );
 
@@ -1844,7 +1848,7 @@ Then(
     const locator = this.page.locator(
       `//div[@id='allItemsList']//li//*[text()='${resolvedModule}']/following-sibling::*[contains(text(),'${resolvedCount}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e57) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e55) { /* soft */ }
   }
 );
 
@@ -1862,7 +1866,7 @@ Then(
     const locator = this.page.locator(
       `//div[contains(@class,'search')]//*[contains(text(),'${resolved}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e58) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e56) { /* soft */ }
   }
 );
 
@@ -1879,7 +1883,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e59) { /* soft */ }
+    } catch (e57) { /* soft */ }
   }
 );
 
@@ -1901,7 +1905,7 @@ Then(
   async function ( _usage, filterName) {
     const resolved = this.savedValues.resolve(filterName);
     const locator = this.page.locator(`//*[contains(@class,'filter')]//*[contains(text(),'${resolved}')]`).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e60) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e58) { /* soft */ }
   }
 );
 
@@ -1911,7 +1915,7 @@ Then(
   /^I (softly see|see) new tab is opened$/,
   async function ( _usage) {
     const pages = this.context.pages();
-    try { expect(pages.length).toBeGreaterThan(1); } catch (e61) { /* soft */ }
+    try { expect(pages.length).toBeGreaterThan(1); } catch (e59) { /* soft */ }
   }
 );
 
@@ -1922,7 +1926,7 @@ Then(
   async function ( _usage, title) {
     const resolved = this.savedValues.resolve(title);
     const pageTitle = await this.page.title();
-    try { expect(pageTitle).toContain(resolved); } catch (e62) { /* soft */ }
+    try { expect(pageTitle).toContain(resolved); } catch (e60) { /* soft */ }
   }
 );
 
@@ -1945,7 +1949,7 @@ Then(
     const locator = this.page.locator(
       `//label[contains(text(),'${resolvedDropdown}')]/..//*[contains(text(),'${resolvedOption}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e63) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e61) { /* soft */ }
   }
 );
 
@@ -1958,7 +1962,7 @@ Then(
       `//*[normalize-space(text())='${resolvedSection}']/ancestor::div[contains(@class,'section')]//option[text()='${resolvedOption}'] | ` +
       `//*[normalize-space(text())='${resolvedSection}']/ancestor::div[contains(@class,'section')]//*[contains(text(),'${resolvedOption}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e64) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e62) { /* soft */ }
   }
 );
 
@@ -1973,7 +1977,7 @@ Then(
       const locator = this.page.locator(
         `//*[contains(text(),'${resolved}')]/ancestor::div[1]//*[contains(text(),'${opt}')]`
       ).first();
-      try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e65) { /* soft */ }
+      try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e63) { /* soft */ }
     }
   }
 );
@@ -1994,7 +1998,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e66) { /* soft */ }
+    } catch (e64) { /* soft */ }
   }
 );
 
@@ -2008,7 +2012,7 @@ Then(
     const locator = this.page.locator(
       `//c-fieldlwc[@data-fieldapiname='${resolvedField}']//*[contains(text(),'${resolvedValue}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e67) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e65) { /* soft */ }
   }
 );
 
@@ -2021,7 +2025,7 @@ Then(
     const locator = this.page.locator(
       `//img[contains(@alt,'${resolved}') or contains(@title,'${resolved}')]`
     ).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e68) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e66) { /* soft */ }
   }
 );
 
@@ -2032,7 +2036,7 @@ Then(
   async function ( _usage, name) {
     const resolved = this.savedValues.resolve(name);
     const locator = this.page.locator(`//*[contains(text(),'${resolved}')]`).first();
-    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e69) { /* soft */ }
+    try { await expect(locator).toBeVisible({ timeout: 10000 }); } catch (e67) { /* soft */ }
   }
 );
 
@@ -2059,7 +2063,7 @@ Then(
       } else {
         await expect(locator).toBeVisible({ timeout: 10000 });
       }
-    } catch (e70) { /* soft */ }
+    } catch (e68) { /* soft */ }
   }
 );
 
@@ -2093,7 +2097,7 @@ Then(
   /^I (softly see|see) grant details on modal and it gets enlarge$/,
   async function ( _usage) {
     const modal = this.page.locator(`//div[contains(@class,'modal')]`).first();
-    try { await expect(modal).toBeVisible({ timeout: 10000 }); } catch (e71) { /* soft */ }
+    try { await expect(modal).toBeVisible({ timeout: 10000 }); } catch (e69) { /* soft */ }
   }
 );
 
@@ -2145,7 +2149,7 @@ Then(
       const locator = this.page.locator(
         `//div[contains(@class,'header') or contains(@class,'detail-panel')]//*[contains(text(),'${field}')]`
       ).first();
-      try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e72) { /* soft */ }
+      try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e70) { /* soft */ }
     }
   }
 );
@@ -2165,7 +2169,7 @@ Then(
           const locator = this.page.locator(
             `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//td//*[normalize-space(text())='${resolved}']`
           ).first();
-          try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e73) { /* soft */ }
+          try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e71) { /* soft */ }
         }
       }
     }
@@ -2185,7 +2189,7 @@ Then(
           const locator = this.page.locator(
             `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//td//*[normalize-space(text())='${resolved}']`
           ).first();
-          try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e74) { /* soft */ }
+          try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e72) { /* soft */ }
         }
       }
     }
@@ -2202,7 +2206,7 @@ Then(
       `//div[contains(@class,'modal')]//button[text()='${resolved}'][@disabled]`
     ).first();
     if (usage.includes('not')) {
-      try { await expect(btn).toBeHidden({ timeout: 5000 }); } catch (e75) { /* ok */ }
+      try { await expect(btn).toBeHidden({ timeout: 5000 }); } catch (e73) { /* ok */ }
     } else {
       await expect(btn).toBeVisible({ timeout: 10000 });
     }
@@ -2218,7 +2222,7 @@ Then(
     for (const msg of messages) {
       const resolved = this.savedValues.resolve(msg);
       const locator = this.page.locator(`//*[contains(text(),'${resolved}')]`).first();
-      try { await expect(locator).toBeHidden({ timeout: 5000 }); } catch (e76) { /* soft */ }
+      try { await expect(locator).toBeHidden({ timeout: 5000 }); } catch (e74) { /* soft */ }
     }
   }
 );
@@ -2232,7 +2236,7 @@ Then(
     const input = this.page.locator(
       `//c-fieldlwc[@data-fieldapiname='${resolved}']//input[not(@disabled)]`
     ).first();
-    try { await expect(input).toBeHidden({ timeout: 5000 }); } catch (e77) { /* soft */ }
+    try { await expect(input).toBeHidden({ timeout: 5000 }); } catch (e75) { /* soft */ }
   }
 );
 
@@ -2244,7 +2248,7 @@ Then(
     const roles = dataTable.raw().flat().filter((s) => s.trim());
     for (const role of roles) {
       const locator = this.page.locator(`//option[text()='${role}'] | //span[@title='${role}']`).first();
-      try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e78) { /* soft */ }
+      try { await expect(locator).toBeVisible({ timeout: 5000 }); } catch (e76) { /* soft */ }
     }
   }
 );
@@ -2281,7 +2285,7 @@ Then(
       const cur = parseFloat(this.savedValues.resolve(currentKey).replace(/[^0-9.]/g, ''));
       const expected = ini - dec;
       expect(Math.abs(expected - cur)).toBeLessThan(0.01);
-    } catch (e79) { /* soft */ }
+    } catch (e77) { /* soft */ }
   }
 );
 

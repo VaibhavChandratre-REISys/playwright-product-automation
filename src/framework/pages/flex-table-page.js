@@ -60,15 +60,22 @@ export class FlexTablePage extends BasePage {
     shouldExist
   ) {
     const resolvedId = this.resolveTableId(tableId);
-    const resolvedValue = this.resolve(uniqueValue);
+    let resolvedValue = this.resolve(uniqueValue);
+    if (uniqueValue.toLowerCase() === 'record id') {
+      resolvedValue = _nullishCoalesce(_nullishCoalesce(_nullishCoalesce(this.savedValues.getCaseInsensitive('EGMS ID')
+, () => ( this.savedValues.getCaseInsensitive('Record Id')))
+, () => ( this.savedValues.getCaseInsensitive('GovGrants ID')))
+, () => ( resolvedValue));
+    }
     logger.info(`Assert row-level button "${buttonName}" [${shouldExist ? 'visible' : 'hidden'}] for "${resolvedValue}" in table "${resolvedId}"`);
 
-    // Exact Java XPath for dropdown trigger (from GovGrantsAssertionObjects)
+    await this.waitHelper.waitForFlexTablesToLoad();
     const dropdownTrigger = this.page.locator(
-      `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//tbody/tr//*[text()='${resolvedValue}']//ancestor::td/div[not(contains(@class,'inputRows'))]/parent::td/preceding-sibling::td//button`
+      `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//tbody/tr//*[normalize-space(text())='${resolvedValue}']//ancestor::td/div[not(contains(@class,'inputRows'))]/parent::td/preceding-sibling::td//button | ` +
+      `//c-lwc-flex-table[@data-flextablename='${resolvedId}']//tbody/tr//*[normalize-space(text())='${resolvedValue}']//ancestor::td//following-sibling::td/div[not(contains(@class,'inputRows'))]/parent::td/following-sibling::td//button`
     ).first();
 
-    await this.waitHelper.waitUntilVisible(dropdownTrigger, 20000);
+    await this.waitHelper.waitUntilVisible(dropdownTrigger, 30000);
     await dropdownTrigger.dispatchEvent('click');
 
     // Exact Java XPath for action icon (from FlexTable.getTableActionIcon)

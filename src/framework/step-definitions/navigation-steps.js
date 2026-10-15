@@ -334,32 +334,39 @@ When(
     const resolved = this.savedValues.resolve(menuItem);
     logger.info(`Toggle select: "${resolved}"`);
     
-    // Match Selenium logic for toggle button locator
+    await this.waitHelper.waitForFlexTablesToLoad();
+
     let toggleBtn;
     if (resolved.includes('Announcements') || resolved.includes('Funding Decision Memos') || resolved.includes('Contact')) {
       toggleBtn = this.page.locator(
-        `//c-lwc-flex-table//lightning-button-menu//button[@class='slds-button slds-button_icon slds-button_icon-more']`
+        `//c-lwc-flex-table//lightning-button-menu//button[contains(@class,'slds-button_icon-more')]`
       ).first();
     } else {
-      const toggleName = resolved.split('-')[0].trim();
+      const toggleName = resolved.includes('External Funding Sources') || resolved.includes('NGO Programs')
+        ? resolved.split(/\s+/)[1]
+        : resolved.includes('Subawards')
+          ? resolved.split(' -')[0]
+          : resolved.split('-')[0].trim();
       toggleBtn = this.page.locator(
-        `//span[contains(text(),'${toggleName}')]/ancestor::gnt-flex-table-l-w-c//lightning-button-menu//button[@class='slds-button slds-button_icon slds-button_icon-more'] | ` +
-        `//span[contains(text(),'${toggleName}')]/ancestor::c-lwc-flex-table//lightning-button-menu//button[@class='slds-button slds-button_icon slds-button_icon-more']`
+        `//h2[contains(normalize-space(.),'${toggleName}')]/ancestor::c-lwc-flex-table//lightning-button-menu//button[contains(@class,'slds-button_icon-more')] | ` +
+        `//span[contains(normalize-space(.),'${toggleName}')]/ancestor::gnt-flex-table-l-w-c//lightning-button-menu//button[contains(@class,'slds-button_icon-more')] | ` +
+        `//span[contains(normalize-space(.),'${toggleName}')]/ancestor::c-lwc-flex-table//lightning-button-menu//button[contains(@class,'slds-button_icon-more')]`
       ).first();
     }
-    
-    await toggleBtn.waitFor({ state: 'visible', timeout: 15000 });
-    await toggleBtn.click();
-    
+
+    await toggleBtn.waitFor({ state: 'visible', timeout: 30000 });
+    await toggleBtn.evaluate((element) => element.click());
+
     const menuItemLocator = this.page.locator(
-      `//div[contains(@class,'dropdown')]//span[text()='${resolved}'] | ` +
-      `//lightning-menu-item//*[text()='${resolved}']`
+      `//c-lwc-flex-table//lightning-button-menu//div//a//span[normalize-space(text())='${resolved}'] | ` +
+      `//gnt-flex-table-l-w-c//lightning-button-menu//div//a//span[normalize-space(text())='${resolved}'] | ` +
+      `//lightning-menu-item//*[normalize-space(text())='${resolved}']`
     ).first();
-    if (await menuItemLocator.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await menuItemLocator.click();
-    }
-    const nav = new NavigationPage(this.page, this.savedValues);
-    await nav.waitForPageLoad();
+    await menuItemLocator.waitFor({ state: 'visible', timeout: 15000 });
+    await menuItemLocator.click();
+
+    await this.waitHelper.waitForSpinnerDisappear();
+    await this.waitHelper.waitForFlexTablesToLoad();
     
     // Log which table is loaded after toggle for debugging
     const tables = await this.page.evaluate(() => {

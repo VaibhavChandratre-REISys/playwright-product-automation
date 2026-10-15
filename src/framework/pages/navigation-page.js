@@ -95,13 +95,16 @@ export class NavigationPage extends BasePage {
 
     // POC: wait for specific subheader button to be present
     const subheaderButton = this.page.locator(
-      `//gnt-side-bar-lwc//section//button[@title='${resolvedSub}']`
+      `//gnt-side-bar-lwc//section//button[@title='${resolvedSub}'] | ` +
+      `//gnt-side-bar-lwc//section//*[@title='${resolvedSub}']/ancestor::button[1] | ` +
+      `//gnt-side-bar-lwc//section//button[.//*[normalize-space(text())='${resolvedSub}']]`
     ).first();
-    await subheaderButton.waitFor({ state: 'attached', timeout: 30000 });
+    await subheaderButton.waitFor({ state: 'visible', timeout: 30000 });
 
     // POC: expand parent accordion (summary1 wrapper) if collapsed
     const parentAccordion = this.page.locator(
-      `//gnt-side-bar-lwc//section//button[@title='${resolvedSub}']/ancestor::ul//div[contains(@class,'summary1')]//button[@aria-expanded='false']`
+      `//gnt-side-bar-lwc//section//button[@title='${resolvedSub}']/ancestor::ul//div[contains(@class,'summary1')]//button[@aria-expanded='false'] | ` +
+      `//gnt-side-bar-lwc//section//*[@title='${resolvedSub}']/ancestor::button[1]/ancestor::ul//div[contains(@class,'summary1')]//button[@aria-expanded='false']`
     );
     if (await parentAccordion.count() > 0) {
       logger.info(`  Expanding parent accordion for: "${resolvedSub}"`);
@@ -111,7 +114,9 @@ export class NavigationPage extends BasePage {
 
     // POC: expand subheader itself if collapsed
     const subAccordion = this.page.locator(
-      `//gnt-side-bar-lwc//section//h2//button[@title='${resolvedSub}' and @aria-expanded='false']`
+      `//gnt-side-bar-lwc//section//h2//button[@title='${resolvedSub}' and @aria-expanded='false'] | ` +
+      `//gnt-side-bar-lwc//section//h2//*[@title='${resolvedSub}']/ancestor::button[1][@aria-expanded='false'] | ` +
+      `//gnt-side-bar-lwc//section//h2//button[@aria-expanded='false'][.//*[normalize-space(text())='${resolvedSub}']]`
     );
     if (await subAccordion.count() > 0) {
       logger.info(`  Expanding sub-accordion: "${resolvedSub}"`);
@@ -131,9 +136,14 @@ export class NavigationPage extends BasePage {
     // POC: find the sidebar link scoped to the subheader section (matching Selenium implementation)
     // Use only the specific scoped XPath to avoid matching wrong elements
     const linkByName = this.page.locator(
-      `//gnt-side-bar-lwc//section//h2//button[@title='${resolvedSub}']//ancestor::section[@data-my-type='header']//c-accordion-content//button[@title='${resolvedContent}']`
-    );
-    await linkByName.waitFor({ state: 'attached', timeout: 30000 });
+      `//nav[contains(@class,'sidebar')]//button[@title='${resolvedSub}']/ancestor::section[1]//button[@title='${resolvedContent}'] | ` +
+      `//div[contains(@class,'sidebar slds-split-view_container slds-is-open open-panel')]//section//button[@title='${resolvedSub}']/parent::h2/parent::div/parent::section//a[normalize-space(text())='${resolvedContent}'] | ` +
+      `//section[@data-group-label='${resolvedSub}']//a[normalize-space(text())='${resolvedContent}'] | ` +
+      `//gnt-side-bar-lwc//*[@title='${resolvedContent}']/ancestor::button[1] | ` +
+      `//gnt-side-bar-lwc//*[@title='${resolvedContent}']/ancestor::a[1] | ` +
+      `//gnt-side-bar-lwc//button[.//*[normalize-space(text())='${resolvedContent}']]`
+    ).first();
+    await linkByName.waitFor({ state: 'visible', timeout: 30000 });
 
     // POC: use JavaScript click with retry
     try {
