@@ -7,7 +7,6 @@ reports/*/diagnostics/
 #.env
 #.env.*
 #!.env.example
-/envs/framework/.env.afs-grantor
 
 # Compiled JavaScript files (TypeScript outputs to dist/)
 src/**/*.js
